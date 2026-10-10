@@ -94,16 +94,14 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
     let bitangent = cross(n, tangent);
     pbr_input.N = normalize(n + (tangent * grad.x + bitangent * grad.y) * 0.35);
 
-    // Foam: crisp streaks and bubbles normally; long, smooth silk in long
-    // exposure (the texture is sampled stretched along the flow).
-    let foam_uv = mix(
-        vec2<f32>(flow.x, flow.y + t * s),
-        vec2<f32>(flow.x, flow.y * 0.25 + t * s * 0.3),
-        le,
-    );
-    let tex = textureSample(foam_tex, foam_sampler, foam_uv).a;
-    let crisp = smoothstep(0.45, 0.85, tex);
-    let silky = smoothstep(0.05, 0.6, tex);
+    // Foam: broad streaks and bubbles normally; long, smooth silk in long
+    // exposure (sampled stretched along the flow, like a slow shutter).
+    // Two layers at different scales and speeds avoid a repetitive look.
+    let crisp_a = textureSample(foam_tex, foam_sampler, vec2<f32>(flow.x * 0.6, flow.y * 0.5 + t * s)).a;
+    let crisp_b = textureSample(foam_tex, foam_sampler, vec2<f32>(flow.x * 0.35 + 0.3, flow.y * 0.3 + t * s * 0.8)).a;
+    let silk_tex = textureSample(foam_tex, foam_sampler, vec2<f32>(flow.x * 0.6, flow.y * 0.1 + t * s * 0.25)).a;
+    let crisp = smoothstep(0.3, 0.8, crisp_a * 0.55 + crisp_b * 0.45);
+    let silky = smoothstep(0.0, 0.55, silk_tex) * 0.85 + 0.15;
     let foam = clamp(foam_amount * mix(crisp, silky, le) * water.foam_strength, 0.0, 1.0);
 
     let deep = pbr_input.material.base_color;

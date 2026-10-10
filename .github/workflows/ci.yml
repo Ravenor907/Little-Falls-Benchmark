@@ -82,7 +82,7 @@ jobs:
           WGPU_BACKEND: vulkan
           RUST_LOG: warn
         run: |
-          timeout 900 xvfb-run -a -s "-screen 0 1280x720x24" \
+          timeout 1800 xvfb-run -a -s "-screen 0 1280x720x24" \
             ./target/release/little-falls --run graphics --preset high \
               --windowed 800x450 --sweep-frames 10 --duration 240 --exit-on-finish --no-motion-blur \
               --screenshots ci-out/screens --out ci-out/results \

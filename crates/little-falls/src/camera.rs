@@ -14,6 +14,7 @@ use bevy::pbr::{
     VolumetricFog,
 };
 use bevy::prelude::*;
+use bevy::render::view::{ColorGrading, ColorGradingGlobal, ColorGradingSection};
 
 #[derive(Component)]
 pub struct MainCamera;
@@ -32,6 +33,21 @@ pub fn spawn_camera(mut commands: Commands, config: Res<Config>) {
         }),
         Transform::from_translation(pos).looking_at(look, Vec3::Y),
         Tonemapping::TonyMcMapface,
+        // Gentle filmic grade: a little more contrast and color, slightly
+        // cool, to keep the forest from looking gray and flat.
+        ColorGrading::with_identical_sections(
+            ColorGradingGlobal {
+                exposure: 0.15,
+                temperature: -0.04,
+                post_saturation: 1.08,
+                ..default()
+            },
+            ColorGradingSection {
+                saturation: 1.04,
+                contrast: 1.08,
+                ..default()
+            },
+        ),
         Bloom::NATURAL,
         // SSAO needs MSAA off; SMAA handles edges instead.
         Msaa::Off,

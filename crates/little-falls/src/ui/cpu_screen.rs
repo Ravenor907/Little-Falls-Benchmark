@@ -63,7 +63,7 @@ fn enter(mut commands: Commands, config: Res<Config>, mut visible: ResMut<SceneV
             .spawn(move || {
                 // Let the UI settle before measuring.
                 std::thread::sleep(Duration::from_millis(800));
-                let mut report = |label: &str, f: f32, span: (f32, f32)| {
+                let report = |label: &str, f: f32, span: (f32, f32)| {
                     if cancel.load(Ordering::Relaxed) {
                         std::panic::resume_unwind(Box::new(Cancelled));
                     }

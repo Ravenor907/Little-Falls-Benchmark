@@ -27,35 +27,44 @@ Built for gaming-focused Linux distros, including handhelds:
 
 ## Running it
 
-Download the AppImage from [Releases](../../releases), then:
+No installation. Download one file from [Releases](../../releases) and run
+it:
 
 ```sh
 chmod +x LittleFalls-*.AppImage
 ./LittleFalls-*.AppImage
 ```
 
-On SteamOS or Bazzite game mode, add the AppImage to Steam as a non-Steam
-game and launch it from there.
+(Or double-click it in your file manager.) On SteamOS or Bazzite game mode,
+add it to Steam as a non-Steam game and launch it from there.
 
-A full run takes about two minutes: CPU and memory tests first (console),
-then the graphics flythrough. Results are saved to
-`~/.local/share/little-falls/results/`.
+The app opens on the waterfall with a menu:
 
-### Options
+- **Run benchmark**: CPU and memory tests, then the graphics flythrough
+  (about two minutes)
+- **Graphics only** / **CPU and memory**: run one part
+- **Explore scene**: fly around freely
+- **Quality**: Low, Medium, High (the standard scoreboard test) or Ultra
+
+Mouse, keyboard and gamepad all work: arrows or D-pad to move, Enter or A
+to select, Esc or B to go back. `L` / Y toggles long exposure water.
+
+Results are shown in the app and saved to
+`~/.local/share/little-falls/results/` for scoreboard submission.
+
+### Command line options
+
+For scripts and automated testing; not needed for normal use.
 
 ```
 --preset <low|medium|high|ultra>  Graphics quality (default: high)
---duration <seconds>              Length of the recorded flythrough (default: 60)
+--run <full|graphics|cpu>         Skip the menu and start a run
 --windowed <WIDTHxHEIGHT>         Run in a window instead of fullscreen
---cpu-only                        Only run the CPU and memory tests
---graphics-only                   Skip the CPU and memory tests
---explore                         Free-fly camera, no benchmark
+--cpu-only                        CPU and memory tests in the terminal, no window
+--duration <seconds>              Length of the recorded flythrough (default: 60)
 --name <nickname>                 Name shown on the scoreboard
 --exit-on-finish                  Quit as soon as results are saved
 ```
-
-Controls: `L` (gamepad Y) toggles long exposure water, `Esc` (gamepad B)
-quits.
 
 ## What it measures
 
@@ -110,3 +119,6 @@ packaging/appimage   AppImage packaging
 ## License
 
 GPL-3.0. See [LICENSE](LICENSE).
+
+The embedded [Inter](https://rsms.me/inter/) font is licensed under the SIL Open Font
+License 1.1 ([crates/little-falls/assets/fonts/OFL.txt](crates/little-falls/assets/fonts/OFL.txt)).

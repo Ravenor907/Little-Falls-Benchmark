@@ -102,12 +102,8 @@ pub fn spawn(
             let x = center(z) + side * (half_width(z) + rng.range(-0.3, 1.2));
             let s = rng.range(0.4, 1.4);
             let pos = Vec3::new(x, ground(x, z) + 0.05 * s, z);
-            place_rock(
-                commands,
-                &mut rng,
-                pos,
-                Vec3::new(s * rng.range(0.8, 1.5), s * rng.range(0.5, 0.9), s),
-            );
+            let size = Vec3::new(s * rng.range(0.8, 1.5), s * rng.range(0.5, 0.9), s);
+            place_rock(commands, &mut rng, pos, size);
         }
         // Occasional stones in the stream bed, breaking the surface.
         if rng.f() < 0.35 {

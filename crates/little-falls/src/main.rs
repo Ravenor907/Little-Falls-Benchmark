@@ -1,10 +1,9 @@
 //! Little Falls: a forest waterfall benchmark for Linux gaming systems.
 //!
-//! Order of a full run:
-//! 1. CPU and memory tests (console, before the window opens so the
-//!    renderer does not compete for the CPU).
-//! 2. Graphics test: a timed flythrough of the waterfall scene.
-//! 3. Scores, a results JSON file, and the results screen.
+//! A single self-contained executable: run it and pick a test from the
+//! menu. A full run does the CPU and memory tests (with rendering paused),
+//! then a timed flythrough of the waterfall scene, then shows the scores
+//! and saves a results file.
 
 mod bench;
 mod camera;
@@ -12,7 +11,9 @@ mod config;
 mod geom;
 mod noise;
 mod scene;
+mod state;
 mod textures;
+mod ui;
 
 use bevy::prelude::*;
 use bevy::window::{MonitorSelection, PresentMode, WindowMode, WindowResolution};
@@ -21,6 +22,7 @@ use lf_core::results::{self, RunInfo};
 use lf_core::score::FrameStats;
 use lf_core::sysinfo::SystemInfo;
 use lf_core::{cpu, memory, Measurement};
+use state::AppState;
 use std::io::Write;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -102,14 +104,10 @@ fn main() {
         sys.cpu_model, sys.cpu_threads, sys.ram_mib, sys.os_name
     );
 
-    let cpu_results = if config.run_cpu {
+    // Script mode: CPU and memory in the terminal, no window.
+    if config.headless_cpu {
         println!("\nRunning CPU and memory tests...");
-        run_cpu_tests(config.quick)
-    } else {
-        Vec::new()
-    };
-
-    if !config.run_graphics {
+        let cpu_results = run_cpu_tests(config.quick);
         let (report, line) = save_report(&config, &sys, &cpu_results, None, (0, 0));
         println!("\nCPU:      {:>6.0}", report.scores.cpu);
         println!("Memory:   {:>6.0}", report.scores.memory);
@@ -118,7 +116,6 @@ fn main() {
         return;
     }
 
-    println!("\nStarting graphics test ({} preset)...", config.preset.name());
     let window = Window {
         title: "Little Falls".into(),
         present_mode: PresentMode::AutoNoVsync,
@@ -134,18 +131,26 @@ fn main() {
         ..default()
     };
 
-    let mut app = App::new();
-    app.add_plugins(DefaultPlugins.set(WindowPlugin {
-        primary_window: Some(window),
-        ..default()
-    }))
-    .insert_resource(config.clone())
-    .insert_resource(bench::CpuResults(cpu_results))
-    .insert_resource(bench::System(sys))
-    .add_plugins((scene::ScenePlugin, bench::BenchPlugin))
-    .add_systems(Startup, camera::spawn_camera);
-    if config.explore {
-        app.add_systems(Update, camera::explore_camera);
-    }
-    app.run();
+    App::new()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(window),
+            ..default()
+        }))
+        .init_state::<AppState>()
+        .insert_resource(config)
+        .insert_resource(state::System(sys))
+        .insert_resource(state::RunData::default())
+        .add_plugins((scene::ScenePlugin, ui::UiPlugin, bench::plugin))
+        .add_systems(PreStartup, state::detect_gpu)
+        .add_systems(Startup, (camera::spawn_camera, state::auto_start))
+        .add_systems(
+            Update,
+            (
+                camera::update_camera_quality,
+                camera::ambient_camera.run_if(in_state(AppState::Menu)),
+                camera::ambient_camera.run_if(in_state(AppState::Results)),
+                camera::explore_camera.run_if(in_state(AppState::Explore)),
+            ),
+        )
+        .run();
 }

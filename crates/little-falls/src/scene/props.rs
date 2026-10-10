@@ -1,6 +1,7 @@
 //! Rocks and fallen logs.
 
 use super::creek::{self, bed, center, ground, half_width};
+use super::SceneObject;
 use crate::geom::{self, MeshData};
 use crate::noise::{fbm3, Rng};
 use bevy::prelude::*;
@@ -84,6 +85,7 @@ pub fn spawn(
     let place_rock = |commands: &mut Commands, rng: &mut Rng, pos: Vec3, size: Vec3| {
         let v = variants[(rng.u64() % variants.len() as u64) as usize].clone();
         commands.spawn((
+            SceneObject,
             Mesh3d(v),
             MeshMaterial3d(rock_mat.clone()),
             Transform::from_translation(pos)
@@ -192,6 +194,7 @@ pub fn spawn(
         let len = a.distance(b);
         let mesh = meshes.add(log_mesh(len, r, 40 + i as u32).build());
         commands.spawn((
+            SceneObject,
             Mesh3d(mesh),
             MeshMaterial3d(log_mat.clone()),
             Transform::from_matrix(geom::segment(a, b)),

@@ -2,6 +2,7 @@
 //! little CPU work each frame) and butterflies drifting in the sunbeams.
 
 use super::creek::{self, ground};
+use super::SceneObject;
 use crate::config::Quality;
 use crate::geom::{self, MeshData};
 use crate::noise::{value3, Rng};
@@ -109,6 +110,7 @@ pub fn spawn(
         let rate = rng.range(11.0, 15.0);
         commands
             .spawn((
+                SceneObject,
                 Mesh3d(body.clone()),
                 MeshMaterial3d(bird_mat.clone()),
                 Transform::from_translation(pos),
@@ -162,6 +164,7 @@ pub fn spawn(
         let rate = rng.range(8.0, 11.0);
         commands
             .spawn((
+                SceneObject,
                 Transform::from_translation(pos),
                 Visibility::default(),
                 Butterfly {

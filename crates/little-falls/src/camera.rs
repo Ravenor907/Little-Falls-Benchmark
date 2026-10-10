@@ -1,12 +1,13 @@
 //! Camera setup, the scripted flythrough path and a free-fly explore
 //! camera.
 
-use crate::config::Config;
+use crate::config::{Config, Quality};
 use crate::scene::creek::{bed, center};
 use bevy::core_pipeline::bloom::Bloom;
 use bevy::core_pipeline::motion_blur::MotionBlur;
 use bevy::core_pipeline::smaa::Smaa;
 use bevy::core_pipeline::tonemapping::Tonemapping;
+use bevy::ecs::system::EntityCommands;
 use bevy::input::mouse::AccumulatedMouseMotion;
 use bevy::pbr::{
     DistanceFog, FogFalloff, ScreenSpaceAmbientOcclusion, ScreenSpaceAmbientOcclusionQualityLevel,
@@ -18,7 +19,6 @@ use bevy::prelude::*;
 pub struct MainCamera;
 
 pub fn spawn_camera(mut commands: Commands, config: Res<Config>) {
-    let q = config.quality;
     let (pos, look) = flythrough(0.0);
     let mut cam = commands.spawn((
         Camera3d::default(),
@@ -45,6 +45,12 @@ pub fn spawn_camera(mut commands: Commands, config: Res<Config>) {
         },
         MainCamera,
     ));
+    apply_quality(&mut cam, &config.quality);
+}
+
+/// Adds or removes the preset-dependent post effects.
+fn apply_quality(cam: &mut EntityCommands, q: &Quality) {
+    cam.remove::<(ScreenSpaceAmbientOcclusion, VolumetricFog, MotionBlur)>();
     if q.ssao > 0 {
         cam.insert(ScreenSpaceAmbientOcclusion {
             quality_level: match q.ssao {
@@ -68,6 +74,20 @@ pub fn spawn_camera(mut commands: Commands, config: Res<Config>) {
             samples: 4,
             ..default()
         });
+    }
+}
+
+/// Keeps the camera's effects in step with the selected preset.
+pub fn update_camera_quality(
+    mut commands: Commands,
+    config: Res<Config>,
+    cam: Query<Entity, With<MainCamera>>,
+) {
+    if !config.is_changed() || config.is_added() {
+        return;
+    }
+    for e in &cam {
+        apply_quality(&mut commands.entity(e), &config.quality);
     }
 }
 
@@ -118,7 +138,20 @@ pub fn flythrough(t: f32) -> (Vec3, Vec3) {
     (pos, look)
 }
 
-/// Free-fly camera for `--explore`: WASD to move, Q/E down/up, hold the
+/// Slow, endless drift along the flythrough path behind the menu and
+/// results screens.
+pub fn ambient_camera(time: Res<Time>, mut cam: Query<&mut Transform, With<MainCamera>>) {
+    let Ok(mut tf) = cam.single_mut() else { return };
+    let t = (time.elapsed_secs() * 0.004).fract();
+    let (pos, look) = flythrough(t);
+    let target = Transform::from_translation(pos).looking_at(look, Vec3::Y);
+    // Ease toward the path so leaving a benchmark does not jump-cut.
+    let k = (time.delta_secs() * 1.5).min(1.0);
+    tf.translation = tf.translation.lerp(target.translation, k);
+    tf.rotation = tf.rotation.slerp(target.rotation, k);
+}
+
+/// Free-fly camera for explore mode: WASD to move, Q/E down/up, hold the
 /// right mouse button to look around, Shift to go faster.
 pub fn explore_camera(
     time: Res<Time>,

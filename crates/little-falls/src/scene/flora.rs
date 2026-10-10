@@ -3,6 +3,7 @@
 //! the water.
 
 use super::creek::{self, center, ground, ground_normal, half_width};
+use super::SceneObject;
 use crate::config::Quality;
 use crate::geom::{self, MeshData};
 use crate::noise::Rng;
@@ -164,11 +165,13 @@ pub fn spawn(
         let lean = Vec3::new(-side, 0.0, rng.range(-0.3, 0.3)).normalize();
         let (wood, foliage) = maple(&mut rng, root, lean, q.leaves_per_maple);
         commands.spawn((
+            SceneObject,
             Mesh3d(meshes.add(wood.build())),
             MeshMaterial3d(wood_mat.clone()),
             Transform::IDENTITY,
         ));
         commands.spawn((
+            SceneObject,
             Mesh3d(meshes.add(foliage.build())),
             MeshMaterial3d(maple_leaf_mat.clone()),
             Transform::IDENTITY,
@@ -191,6 +194,7 @@ pub fn spawn(
         let v = fir_variants[(rng.u64() % fir_variants.len() as u64) as usize].clone();
         let s = rng.range(0.8, 1.2);
         commands.spawn((
+            SceneObject,
             Mesh3d(v),
             MeshMaterial3d(needles_mat.clone()),
             Transform::from_xyz(x, ground(x, z) - 0.5, z)
@@ -297,6 +301,7 @@ fn spawn_undergrowth(
     });
     for m in round.into_iter().filter(|m| m.len() > 0) {
         commands.spawn((
+            SceneObject,
             Mesh3d(meshes.add(m.build())),
             MeshMaterial3d(round_mat.clone()),
             Transform::IDENTITY,
@@ -305,6 +310,7 @@ fn spawn_undergrowth(
     }
     for m in ferns.into_iter().filter(|m| m.len() > 0) {
         commands.spawn((
+            SceneObject,
             Mesh3d(meshes.add(m.build())),
             MeshMaterial3d(fern_mat.clone()),
             Transform::IDENTITY,

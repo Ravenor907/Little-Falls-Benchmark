@@ -128,8 +128,10 @@ pub struct Config {
     /// Seconds of recorded flythrough.
     pub duration: f32,
     pub windowed: Option<(u32, u32)>,
-    pub run_cpu: bool,
-    pub run_graphics: bool,
+    /// Start this run immediately instead of showing the menu.
+    pub auto_run: Option<crate::state::RunPlan>,
+    /// Console-only CPU and memory run with no window (for scripts).
+    pub headless_cpu: bool,
     pub quick: bool,
     pub exit_on_finish: bool,
     /// Free camera, no timing. For exploring the scene.
@@ -141,21 +143,25 @@ pub struct Config {
     /// Save screenshots at fixed points of the flythrough (for CI and
     /// visual regression checks).
     pub screenshot_dir: Option<std::path::PathBuf>,
+    /// Capture the menu after shaders settle, then quit (CI).
+    pub menu_screenshot: Option<std::path::PathBuf>,
 }
 
 pub const HELP: &str = "\
 Little Falls benchmark
 
+Just run it: the menu does the rest. These options are for scripts.
+
 USAGE: little-falls [OPTIONS]
 
 OPTIONS:
   --preset <low|medium|high|ultra>  Graphics quality (default: high)
-  --duration <seconds>              Length of the recorded flythrough (default: 60)
+  --run <full|graphics|cpu>         Skip the menu and start this run
   --windowed <WIDTHxHEIGHT>         Run in a window instead of fullscreen
-  --cpu-only                        Only run the CPU and memory tests (no window)
-  --graphics-only                   Skip the CPU and memory tests
+  --duration <seconds>              Length of the recorded flythrough (default: 60)
+  --cpu-only                        CPU and memory tests in the terminal, no window
   --quick                           Short smoke-test workloads (scores not comparable)
-  --explore                         Free-fly camera, no benchmark (WASD + mouse)
+  --explore                         Start in free-fly explore mode
   --exit-on-finish                  Quit as soon as results are saved
   --name <nickname>                 Name shown on the scoreboard
   --out <dir>                       Results folder (default: ~/.local/share/little-falls/results)
@@ -164,8 +170,10 @@ OPTIONS:
   -h, --help                        Show this help
 
 CONTROLS:
-  L / gamepad Y     toggle long exposure water
-  Esc / gamepad B   quit
+  Arrows / D-pad    move between buttons
+  Enter / A         select
+  Esc / B           back
+  L / Y             toggle long exposure water
 ";
 
 impl Config {
@@ -175,8 +183,8 @@ impl Config {
             quality: Preset::High.quality(),
             duration: 60.0,
             windowed: None,
-            run_cpu: true,
-            run_graphics: true,
+            auto_run: None,
+            headless_cpu: false,
             quick: false,
             exit_on_finish: false,
             explore: false,
@@ -184,6 +192,7 @@ impl Config {
             out_dir: None,
             warmup: 5.0,
             screenshot_dir: None,
+            menu_screenshot: None,
         };
         let mut args = std::env::args().skip(1);
         while let Some(a) = args.next() {
@@ -209,8 +218,16 @@ impl Config {
                     let h = h.parse().map_err(|_| "bad height")?;
                     c.windowed = Some((w, h));
                 }
-                "--cpu-only" => c.run_graphics = false,
-                "--graphics-only" => c.run_cpu = false,
+                "--cpu-only" => c.headless_cpu = true,
+                "--run" => {
+                    use crate::state::RunPlan;
+                    c.auto_run = Some(match val("--run")?.as_str() {
+                        "full" => RunPlan::FULL,
+                        "graphics" => RunPlan::GRAPHICS,
+                        "cpu" => RunPlan::CPU,
+                        other => return Err(format!("unknown run '{other}' (full, graphics, cpu)")),
+                    });
+                }
                 "--quick" => c.quick = true,
                 "--explore" => c.explore = true,
                 "--exit-on-finish" => c.exit_on_finish = true,
@@ -224,16 +241,11 @@ impl Config {
                         .ok_or("--warmup must be a number >= 0")?;
                 }
                 "--screenshots" => c.screenshot_dir = Some(val("--screenshots")?.into()),
+                "--menu-screenshot" => c.menu_screenshot = Some(val("--menu-screenshot")?.into()),
                 other => return Err(format!("unknown option '{other}'")),
             }
         }
-        if c.quick {
-            c.duration = c.duration.min(15.0);
-        }
         c.quality = c.preset.quality();
-        if c.explore {
-            c.run_cpu = false;
-        }
         Ok(c)
     }
 }

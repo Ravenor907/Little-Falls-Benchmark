@@ -2,11 +2,15 @@ name: CI
 
 on:
   push:
+    branches-ignore: [ci-output]
   pull_request:
   workflow_dispatch:
 
 env:
-  CARGO_TERM_COLOR: always
+  CARGO_TERM_COLOR: never
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -28,47 +32,78 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      # Each stage logs to ci-out/ and records failure instead of stopping,
+      # so the publish step below always runs with complete output.
       - name: Format
-        run: cargo fmt --all --check
+        run: |
+          mkdir -p ci-out
+          cargo fmt --all --check > ci-out/1-fmt.log 2>&1 || echo fmt >> ci-out/FAILED
 
       - name: Build
-        run: cargo build --release --workspace
+        run: |
+          cargo build --release --workspace --message-format=short > ci-out/2-build.log 2>&1 \
+            || echo build >> ci-out/FAILED
 
       - name: Clippy
-        run: cargo clippy --release --workspace -- -D warnings
+        if: hashFiles('ci-out/FAILED') == ''
+        run: |
+          cargo clippy --release --workspace --message-format=short -- -D warnings \
+            > ci-out/3-clippy.log 2>&1 || echo clippy >> ci-out/FAILED
 
       - name: Unit tests
-        run: cargo test --release --workspace
+        if: hashFiles('ci-out/FAILED') == ''
+        run: cargo test --release --workspace > ci-out/4-test.log 2>&1 || echo test >> ci-out/FAILED
 
       - name: CPU and memory smoke run
-        run: ./target/release/little-falls --cpu-only --quick --out ci-results
+        if: hashFiles('ci-out/FAILED') == ''
+        run: |
+          ./target/release/little-falls --cpu-only --quick --out ci-out/results \
+            > ci-out/5-cpu.log 2>&1 || echo cpu >> ci-out/FAILED
 
-      # Renders the scene on Mesa's software Vulkan driver (lavapipe).
-      # Frame rates here mean nothing; this catches crashes and produces
-      # screenshots for visual review.
+      # Renders on Mesa's software Vulkan driver (lavapipe). Frame rates
+      # here mean nothing; this catches crashes and produces screenshots.
       - name: Graphics smoke run (software Vulkan)
+        if: hashFiles('ci-out/FAILED') == ''
         env:
           WGPU_BACKEND: vulkan
           RUST_LOG: warn
         run: |
           timeout 900 xvfb-run -a -s "-screen 0 1280x720x24" \
-            ./target/release/little-falls --graphics-only --preset high \
+            ./target/release/little-falls --run graphics --preset high \
               --windowed 960x540 --warmup 45 --duration 90 --exit-on-finish \
-              --screenshots ci-screens --out ci-results
+              --screenshots ci-out/screens --out ci-out/results \
+            > ci-out/6-graphics.log 2>&1 || echo graphics >> ci-out/FAILED
 
-      - name: Upload screenshots and results
+      - name: Menu screenshot
+        if: hashFiles('ci-out/FAILED') == ''
+        env:
+          WGPU_BACKEND: vulkan
+        run: |
+          timeout 300 xvfb-run -a -s "-screen 0 1280x720x24" \
+            ./target/release/little-falls --windowed 1280x720 --menu-screenshot ci-out/screens/menu.png \
+            > ci-out/7-menu.log 2>&1 || echo menu >> ci-out/FAILED
+
+      # Publishes logs, screenshots and Cargo.lock to the ci-output branch.
+      - name: Publish CI output
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-output
-          path: |
-            ci-screens/
-            ci-results/
-            Cargo.lock
-          if-no-files-found: warn
+        run: |
+          cp Cargo.lock ci-out/ 2>/dev/null || true
+          echo "${GITHUB_SHA} ${GITHUB_REF_NAME}" > ci-out/COMMIT
+          cd ci-out
+          git init -q -b ci-output
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          git add -A
+          git commit -q -m "CI output for ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" ci-output
 
       - name: Upload binary
+        if: hashFiles('ci-out/FAILED') == ''
         uses: actions/upload-artifact@v4
         with:
           name: little-falls-linux-x86_64
           path: target/release/little-falls
+
+      - name: Fail if any stage failed
+        run: |
+          if [ -f ci-out/FAILED ]; then echo "Failed stages:"; cat ci-out/FAILED; exit 1; fi

@@ -3,6 +3,7 @@
 //! streak texture seen in slow shutter waterfall photos.
 
 use super::creek;
+use super::SceneObject;
 use crate::config::Quality;
 use crate::geom;
 use crate::noise::Rng;
@@ -68,12 +69,14 @@ pub fn spawn(
         ..default()
     });
     commands.spawn((
+        SceneObject,
         Mesh3d(meshes.add(creek::water_ribbon(0.0, false).build())),
         MeshMaterial3d(base.clone()),
         Transform::IDENTITY,
         NotShadowCaster,
     ));
     commands.spawn((
+        SceneObject,
         Mesh3d(meshes.add(creek::water_ribbon(0.03, true).build())),
         MeshMaterial3d(foam.clone()),
         Transform::IDENTITY,
@@ -93,6 +96,7 @@ pub fn spawn(
     for _ in 0..q.spray_particles {
         let max_life = rng.range(0.6, 1.4);
         commands.spawn((
+            SceneObject,
             Mesh3d(drop.clone()),
             MeshMaterial3d(spray.clone()),
             // Start hidden with staggered timers so the spray builds up
@@ -126,6 +130,7 @@ pub fn spawn(
         let p = pools[i % pools.len()];
         let anchor = p + Vec3::new(rng.range(-2.0, 2.0), rng.range(0.3, 1.8), rng.range(-0.5, 2.5));
         commands.spawn((
+            SceneObject,
             Mesh3d(quad.clone()),
             MeshMaterial3d(mist_mat.clone()),
             Transform::from_translation(anchor).with_scale(Vec3::splat(rng.range(1.5, 3.5))),

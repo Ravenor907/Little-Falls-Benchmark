@@ -257,9 +257,11 @@ fn capture_and_exit(
     if !config.exit_on_finish {
         return;
     }
+    // Counted in frames: saving a screenshot takes a few.
+    let _ = &time;
     let before = shown.0;
-    shown.0 += time.delta_secs();
-    if before < 2.0 && shown.0 >= 2.0 {
+    shown.0 += 1.0;
+    if before < 3.0 && shown.0 >= 3.0 {
         let _ = std::fs::create_dir_all(dir);
         commands
             .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
@@ -267,7 +269,7 @@ fn capture_and_exit(
                 dir.join("results.png"),
             ));
     }
-    if shown.0 >= 5.0 {
+    if shown.0 >= 9.0 {
         exit.write(AppExit::Success);
     }
 }

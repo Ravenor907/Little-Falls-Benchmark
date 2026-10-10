@@ -173,24 +173,29 @@ fn menu_screenshot(
     config: Res<Config>,
     time: Res<Time<Real>>,
     mut shown_at: Local<Option<f32>>,
-    mut taken: Local<bool>,
+    mut frames_since: Local<Option<u32>>,
     mut exit: EventWriter<AppExit>,
 ) {
     let Some(path) = &config.menu_screenshot else {
         return;
     };
+    // Saving takes a few frames; quit only once those have rendered.
+    if let Some(n) = frames_since.as_mut() {
+        *n += 1;
+        if *n > 5 {
+            exit.write(AppExit::Success);
+        }
+        return;
+    }
     let now = time.elapsed_secs();
     let t = now - *shown_at.get_or_insert(now);
-    if !*taken && t > 6.0 {
+    if t > 6.0 {
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
         }
         commands
             .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
             .observe(bevy::render::view::screenshot::save_to_disk(path.clone()));
-        *taken = true;
-    }
-    if t > 10.0 {
-        exit.write(AppExit::Success);
+        *frames_since = Some(0);
     }
 }

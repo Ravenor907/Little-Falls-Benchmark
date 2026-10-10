@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  appimage:
+    name: Build AppImage
+    # Build on an older base so the binary runs on older glibc too.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev file
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release -p little-falls
+
+      - name: Package AppImage and tarball
+        run: packaging/appimage/build.sh target/release/little-falls dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: little-falls-release
+          path: dist/*
+
+      - name: Attach to GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

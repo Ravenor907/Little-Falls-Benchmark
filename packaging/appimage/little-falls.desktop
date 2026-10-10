@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Little Falls
+Comment=Forest waterfall GPU, CPU and memory benchmark
+Exec=little-falls
+Icon=little-falls
+Terminal=false
+Categories=Game;System;

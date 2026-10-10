@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build, test and render
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev \
+            mesa-vulkan-drivers libvulkan1 xvfb
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      - name: Build
+        run: cargo build --release --workspace
+
+      - name: Clippy
+        run: cargo clippy --release --workspace -- -D warnings
+
+      - name: Unit tests
+        run: cargo test --release --workspace
+
+      - name: CPU and memory smoke run
+        run: ./target/release/little-falls --cpu-only --quick --out ci-results
+
+      # Renders the scene on Mesa's software Vulkan driver (lavapipe).
+      # Frame rates here mean nothing; this catches crashes and produces
+      # screenshots for visual review.
+      - name: Graphics smoke run (software Vulkan)
+        env:
+          WGPU_BACKEND: vulkan
+          RUST_LOG: warn
+        run: |
+          timeout 900 xvfb-run -a -s "-screen 0 1280x720x24" \
+            ./target/release/little-falls --graphics-only --preset high \
+              --windowed 960x540 --warmup 45 --duration 90 --exit-on-finish \
+              --screenshots ci-screens --out ci-results
+
+      - name: Upload screenshots and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-output
+          path: |
+            ci-screens/
+            ci-results/
+            Cargo.lock
+          if-no-files-found: warn
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: little-falls-linux-x86_64
+          path: target/release/little-falls

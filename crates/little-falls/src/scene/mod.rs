@@ -15,9 +15,10 @@ use crate::camera::MainCamera;
 use crate::config::Config;
 use crate::textures::Textures;
 use bevy::core_pipeline::Skybox;
+use bevy::pbr::environment_map::EnvironmentMapLight;
 use bevy::pbr::{
-    CascadeShadowConfigBuilder, DirectionalLightShadowMap, EnvironmentMapLight, ExtendedMaterial, FogVolume,
-    NotShadowCaster, VolumetricLight,
+    CascadeShadowConfigBuilder, DirectionalLightShadowMap, ExtendedMaterial, FogVolume, NotShadowCaster,
+    VolumetricLight,
 };
 use bevy::prelude::*;
 use materials::{TerrainExt, TerrainMaterial, TerrainParams, WaterMaterial};

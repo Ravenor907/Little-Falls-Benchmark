@@ -5,7 +5,10 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/Ravenor907/Little-Falls-Benchmark/main/install.sh | sh
 #
-# Run it again to update. Uninstall with:  sh install.sh --uninstall
+# Uses the Flatpak build when Flatpak is available (SteamOS, Bazzite and
+# most desktop distros), otherwise the AppImage. Force either with
+# --appimage or --flatpak. Run it again to update.
+# Uninstall with:  sh install.sh --uninstall
 set -eu
 
 REPO="Ravenor907/Little-Falls-Benchmark"
@@ -28,7 +31,16 @@ fetch() {
     fi
 }
 
+MODE=auto
+case "${1:-}" in
+    --appimage) MODE=appimage ;;
+    --flatpak) MODE=flatpak ;;
+esac
+
 if [ "${1:-}" = "--uninstall" ]; then
+    if command -v flatpak >/dev/null 2>&1; then
+        flatpak uninstall --user -y io.github.Ravenor907.LittleFalls >/dev/null 2>&1 || true
+    fi
     rm -f "$APPIMAGE" "$BIN_DIR/little-falls" "$DESKTOP_DIR/io.github.Ravenor907.LittleFalls.desktop" \
           "$ICON_DIR/io.github.Ravenor907.LittleFalls.svg"
     rmdir "$APP_DIR" 2>/dev/null || true
@@ -44,9 +56,30 @@ trap 'rm -rf "$TMP"' EXIT
 say "Finding the latest release..."
 fetch "https://api.github.com/repos/$REPO/releases" "$TMP/releases.json"
 # First AppImage asset of the newest release (pre-releases included).
-URL=$(grep -o '"browser_download_url": *"[^"]*\.AppImage"' "$TMP/releases.json" | head -n1 | sed 's/.*"\(https[^"]*\)"/\1/')
-[ -n "$URL" ] || die "no release with an AppImage found at https://github.com/$REPO/releases"
-VERSION=$(printf '%s' "$URL" | sed 's|.*/download/\([^/]*\)/.*|\1|')
+asset_url() {
+    grep -o "\"browser_download_url\": *\"[^\"]*$1\"" "$TMP/releases.json" | head -n1 | sed 's/.*"\(https[^"]*\)"/\1/'
+}
+URL=$(asset_url '\.AppImage')
+FLATPAK_URL=$(asset_url '\.flatpak')
+[ -n "$URL$FLATPAK_URL" ] || die "no release with downloads found at https://github.com/$REPO/releases"
+VERSION=$(printf '%s' "${URL:-$FLATPAK_URL}" | sed 's|.*/download/\([^/]*\)/.*|\1|')
+
+if [ "$MODE" = auto ] && [ -n "$FLATPAK_URL" ] && command -v flatpak >/dev/null 2>&1; then
+    MODE=flatpak
+fi
+if [ "$MODE" = flatpak ]; then
+    command -v flatpak >/dev/null 2>&1 || die "flatpak is not installed"
+    [ -n "$FLATPAK_URL" ] || die "this release has no Flatpak bundle; try --appimage"
+    say "Downloading Little Falls $VERSION (Flatpak)..."
+    fetch "$FLATPAK_URL" "$TMP/LittleFalls.flatpak"
+    # The bundle needs the Freedesktop runtime; Flathub provides it.
+    flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+    flatpak install --user -y --noninteractive "$TMP/LittleFalls.flatpak"
+    say "Installed Little Falls $VERSION"
+    echo "   Launch it from your application menu, or run: flatpak run io.github.Ravenor907.LittleFalls"
+    exit 0
+fi
+[ -n "$URL" ] || die "this release has no AppImage; try --flatpak"
 
 say "Downloading Little Falls $VERSION..."
 mkdir -p "$APP_DIR" "$BIN_DIR" "$DESKTOP_DIR" "$ICON_DIR"

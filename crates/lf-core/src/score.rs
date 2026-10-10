@@ -204,10 +204,14 @@ mod tests {
     #[test]
     fn detects_vsync_but_not_natural_variation() {
         // Locked to 60 Hz with small jitter.
-        let locked: Vec<f64> = (0..600).map(|i| 1.0 / 60.0 + ((i % 7) as f64 - 3.0) * 0.00005).collect();
+        let locked: Vec<f64> = (0..600)
+            .map(|i| 1.0 / 60.0 + ((i % 7) as f64 - 3.0) * 0.00005)
+            .collect();
         assert_eq!(detect_frame_cap(&locked), Some(60.0));
         // Uncapped: averages near 60 but load varies along the path.
-        let free: Vec<f64> = (0..600).map(|i| 1.0 / (45.0 + 30.0 * ((i as f64) / 600.0))).collect();
+        let free: Vec<f64> = (0..600)
+            .map(|i| 1.0 / (45.0 + 30.0 * ((i as f64) / 600.0)))
+            .collect();
         assert_eq!(detect_frame_cap(&free), None);
     }
 

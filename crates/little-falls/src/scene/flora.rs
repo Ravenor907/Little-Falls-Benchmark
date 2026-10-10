@@ -299,7 +299,7 @@ fn spawn_undergrowth(
         diffuse_transmission: 0.3,
         ..default()
     });
-    for m in round.into_iter().filter(|m| m.len() > 0) {
+    for m in round.into_iter().filter(|m| !m.is_empty()) {
         commands.spawn((
             SceneObject,
             Mesh3d(meshes.add(m.build())),
@@ -308,7 +308,7 @@ fn spawn_undergrowth(
             NotShadowCaster,
         ));
     }
-    for m in ferns.into_iter().filter(|m| m.len() > 0) {
+    for m in ferns.into_iter().filter(|m| !m.is_empty()) {
         commands.spawn((
             SceneObject,
             Mesh3d(meshes.add(m.build())),

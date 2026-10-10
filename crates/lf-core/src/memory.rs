@@ -25,14 +25,14 @@ fn read_sum(s: &[u64]) -> u64 {
     // Four independent accumulators let the compiler vectorize and keep
     // several loads in flight.
     let mut acc = [0u64; 4];
-    let mut it = s.chunks_exact(4);
-    for c in &mut it {
+    let (chunks, rest) = s.as_chunks::<4>();
+    for c in chunks {
         acc[0] = acc[0].wrapping_add(c[0]);
         acc[1] = acc[1].wrapping_add(c[1]);
         acc[2] = acc[2].wrapping_add(c[2]);
         acc[3] = acc[3].wrapping_add(c[3]);
     }
-    let tail: u64 = it.remainder().iter().fold(0, |a, b| a.wrapping_add(*b));
+    let tail: u64 = rest.iter().fold(0, |a, b| a.wrapping_add(*b));
     acc.iter().fold(tail, |a, b| a.wrapping_add(*b))
 }
 

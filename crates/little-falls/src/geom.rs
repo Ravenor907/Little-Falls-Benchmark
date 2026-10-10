@@ -32,6 +32,10 @@ impl MeshData {
         self.pos.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.pos.is_empty()
+    }
+
     /// Appends `other` transformed by `m`.
     pub fn append(&mut self, other: &MeshData, m: Mat4) {
         let base = self.pos.len() as u32;

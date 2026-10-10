@@ -17,7 +17,6 @@ pub struct LongExposure(pub bool);
 
 #[derive(Resource)]
 pub struct WaterMaterials {
-    pub base: Handle<StandardMaterial>,
     pub foam: Handle<StandardMaterial>,
     pub spray: Handle<StandardMaterial>,
     applied_long_exposure: Option<bool>,
@@ -71,7 +70,7 @@ pub fn spawn(
     commands.spawn((
         SceneObject,
         Mesh3d(meshes.add(creek::water_ribbon(0.0, false).build())),
-        MeshMaterial3d(base.clone()),
+        MeshMaterial3d(base),
         Transform::IDENTITY,
         NotShadowCaster,
     ));
@@ -143,7 +142,6 @@ pub fn spawn(
     }
 
     commands.insert_resource(WaterMaterials {
-        base,
         foam,
         spray,
         applied_long_exposure: None,

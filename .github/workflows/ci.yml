@@ -44,11 +44,12 @@ jobs:
           cargo build --release --workspace --message-format=short > ci-out/2-build.log 2>&1 \
             || echo build >> ci-out/FAILED
 
+      # Lint failures are reported but do not block the runtime checks.
       - name: Clippy
         if: hashFiles('ci-out/FAILED') == ''
         run: |
           cargo clippy --release --workspace --message-format=short -- -D warnings \
-            > ci-out/3-clippy.log 2>&1 || echo clippy >> ci-out/FAILED
+            > ci-out/3-clippy.log 2>&1 || echo clippy >> ci-out/LINT_FAILED
 
       - name: Unit tests
         if: hashFiles('ci-out/FAILED') == ''
@@ -106,4 +107,6 @@ jobs:
 
       - name: Fail if any stage failed
         run: |
-          if [ -f ci-out/FAILED ]; then echo "Failed stages:"; cat ci-out/FAILED; exit 1; fi
+          if [ -f ci-out/FAILED ] || [ -f ci-out/LINT_FAILED ]; then
+            echo "Failed stages:"; cat ci-out/FAILED ci-out/LINT_FAILED 2>/dev/null; exit 1
+          fi

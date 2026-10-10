@@ -5,6 +5,14 @@
 //! then a timed flythrough of the waterfall scene, then shows the scores
 //! and saves a results file.
 
+// Mesh generation loops index several parallel vertex arrays, and Bevy
+// systems naturally take many parameters.
+#![allow(
+    clippy::needless_range_loop,
+    clippy::too_many_arguments,
+    clippy::type_complexity
+)]
+
 mod bench;
 mod camera;
 mod config;

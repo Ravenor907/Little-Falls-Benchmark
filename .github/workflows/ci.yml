@@ -32,6 +32,14 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      # Scanned CC0 art assets, cached between runs.
+      - uses: actions/cache@v4
+        with:
+          path: assets
+          key: assets-${{ hashFiles('tools/assets.json', 'tools/fetch_assets.py') }}
+      - name: Fetch assets
+        run: python3 tools/fetch_assets.py assets
+
       # Each stage logs to ci-out/ and records failure instead of stopping,
       # so the publish step below always runs with complete output.
       - name: Format

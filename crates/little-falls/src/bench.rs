@@ -6,10 +6,10 @@ use crate::camera::{flythrough, MainCamera};
 use crate::config::Config;
 use crate::scene::water::LongExposure;
 use crate::state::{AppState, RunData};
+use crate::warmup::{PipelineStatus, Sweep};
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{save_to_disk, Screenshot};
 use bevy::window::PrimaryWindow;
-use crate::warmup::{PipelineStatus, Sweep};
 use lf_core::score;
 
 fn place_camera(cam: &mut Query<&mut Transform, With<MainCamera>>, progress: f32) {

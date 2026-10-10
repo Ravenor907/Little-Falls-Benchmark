@@ -175,7 +175,9 @@ fn menu_screenshot(
     mut taken: Local<bool>,
     mut exit: EventWriter<AppExit>,
 ) {
-    let Some(path) = &config.menu_screenshot else { return };
+    let Some(path) = &config.menu_screenshot else {
+        return;
+    };
     let now = time.elapsed_secs();
     let t = now - *shown_at.get_or_insert(now);
     if !*taken && t > 6.0 {

@@ -1,14 +1,16 @@
-//! Running water: layered scrolling surfaces, spray particles at every
-//! plunge pool, and drifting mist. Long exposure mode swaps in the silky
-//! streak texture seen in slow shutter waterfall photos.
+//! Running water: one surface drawn by the custom water shader (ripples,
+//! refraction, whitewater), spray particles at every plunge pool, and
+//! drifting mist. Long exposure mode switches the shader to the silky look
+//! of slow shutter waterfall photos.
 
 use super::creek;
+use super::materials::{WaterExt, WaterMaterial, WaterParams};
 use super::SceneObject;
 use crate::config::Quality;
 use crate::geom;
 use crate::noise::Rng;
 use crate::textures::Textures;
-use bevy::math::Affine2;
+use bevy::pbr::ExtendedMaterial;
 use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 
@@ -17,7 +19,7 @@ pub struct LongExposure(pub bool);
 
 #[derive(Resource)]
 pub struct WaterMaterials {
-    pub foam: Handle<StandardMaterial>,
+    pub surface: Handle<WaterMaterial>,
     pub spray: Handle<StandardMaterial>,
     applied_long_exposure: Option<bool>,
 }
@@ -43,41 +45,39 @@ pub fn spawn(
     commands: &mut Commands,
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<StandardMaterial>,
+    water_materials: &mut Assets<WaterMaterial>,
     textures: &Textures,
     q: &Quality,
 ) {
-    let base = materials.add(StandardMaterial {
-        base_color: Color::srgba(0.06, 0.10, 0.09, 0.72),
-        alpha_mode: AlphaMode::Blend,
-        perceptual_roughness: 0.06,
-        reflectance: 0.6,
-        double_sided: true,
-        cull_mode: None,
-        ..default()
-    });
-    let foam = materials.add(StandardMaterial {
-        base_color: Color::WHITE,
-        base_color_texture: Some(textures.streaks.clone()),
-        alpha_mode: AlphaMode::Blend,
-        perceptual_roughness: 0.35,
-        // A little self-illumination keeps whitewater bright in shade,
-        // the way real foam scatters light.
-        emissive: LinearRgba::rgb(0.22, 0.24, 0.26),
-        double_sided: true,
-        cull_mode: None,
-        ..default()
+    let surface = water_materials.add(ExtendedMaterial {
+        base: StandardMaterial {
+            // Tea-green creek water seen through a clear surface.
+            base_color: Color::srgb(0.05, 0.09, 0.08),
+            perceptual_roughness: 0.035,
+            reflectance: 0.5,
+            specular_transmission: 0.85,
+            ior: 1.33,
+            thickness: 0.35,
+            attenuation_color: Color::srgb(0.55, 0.75, 0.62),
+            attenuation_distance: 0.9,
+            double_sided: true,
+            cull_mode: None,
+            ..default()
+        },
+        extension: WaterExt {
+            params: WaterParams {
+                long_exposure: 0.0,
+                normal_strength: 1.0,
+                flow_speed: 1.6,
+                foam_strength: 1.35,
+            },
+            foam: textures.streaks.clone(),
+        },
     });
     commands.spawn((
         SceneObject,
-        Mesh3d(meshes.add(creek::water_ribbon(0.0, false).build())),
-        MeshMaterial3d(base),
-        Transform::IDENTITY,
-        NotShadowCaster,
-    ));
-    commands.spawn((
-        SceneObject,
-        Mesh3d(meshes.add(creek::water_ribbon(0.03, true).build())),
-        MeshMaterial3d(foam.clone()),
+        Mesh3d(meshes.add(creek::water_ribbon(0.02, true).build())),
+        MeshMaterial3d(surface.clone()),
         Transform::IDENTITY,
         NotShadowCaster,
     ));
@@ -142,47 +142,42 @@ pub fn spawn(
     }
 
     commands.insert_resource(WaterMaterials {
-        foam,
+        surface,
         spray,
         applied_long_exposure: None,
     });
 }
 
-/// Scrolls the water textures and applies the long exposure look.
+/// Applies the long exposure look when it is toggled. The flow itself is
+/// animated in the shader from the global time, so nothing changes per
+/// frame here.
 pub fn animate_water(
-    time: Res<Time>,
     long: Res<LongExposure>,
-    textures: Res<Textures>,
-    mut wm: ResMut<WaterMaterials>,
+    wm: Option<ResMut<WaterMaterials>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut water_materials: ResMut<Assets<WaterMaterial>>,
 ) {
-    let t = time.elapsed_secs();
-    if wm.applied_long_exposure != Some(long.0) {
-        wm.applied_long_exposure = Some(long.0);
-        if let Some(m) = materials.get_mut(&wm.foam) {
-            m.base_color_texture = Some(if long.0 {
-                textures.silky.clone()
-            } else {
-                textures.streaks.clone()
-            });
-            m.base_color = if long.0 {
-                Color::srgba(1.0, 1.0, 1.0, 1.0)
-            } else {
-                Color::WHITE
-            };
-        }
-        if let Some(m) = materials.get_mut(&wm.spray) {
-            // Droplets blur away in a long exposure.
-            m.base_color = Color::srgba(1.0, 1.0, 1.0, if long.0 { 0.12 } else { 0.6 });
-        }
+    // The scene (and its water) may not be built yet.
+    let Some(mut wm) = wm else { return };
+    if wm.applied_long_exposure == Some(long.0) {
+        return;
     }
-    if let Some(m) = materials.get_mut(&wm.foam) {
-        let speed = if long.0 { 0.9 } else { 1.6 };
-        m.uv_transform = Affine2::from_translation(Vec2::new((t * 0.05).sin() * 0.02, t * speed));
+    wm.applied_long_exposure = Some(long.0);
+    if let Some(m) = water_materials.get_mut(&wm.surface) {
+        m.extension.params.long_exposure = if long.0 { 1.0 } else { 0.0 };
+    }
+    if let Some(m) = materials.get_mut(&wm.spray) {
+        // Droplets blur away in a long exposure.
+        m.base_color = Color::srgba(1.0, 1.0, 1.0, if long.0 { 0.12 } else { 0.6 });
     }
 }
 
-pub fn animate_spray(time: Res<Time>, mut rng: ResMut<SprayRng>, mut q: Query<(&mut Transform, &mut Spray)>) {
+pub fn animate_spray(
+    time: Res<Time>,
+    rng: Option<ResMut<SprayRng>>,
+    mut q: Query<(&mut Transform, &mut Spray)>,
+) {
+    let Some(mut rng) = rng else { return };
     let dt = time.delta_secs().min(0.05);
     let pools = creek::plunge_points();
     for (mut tf, mut s) in &mut q {

@@ -4,7 +4,7 @@
 Usage: python3 tools/fetch_assets.py [out-dir]   (default: assets)
 
 Layout produced (what the app expects):
-  assets/textures/<id>/{diff,nor_gl,rough}.jpg
+  assets/textures/<id>/{diff,nor_gl}.jpg
   assets/models/<id>/<id>.gltf  (+ .bin and textures/, as published)
   assets/hdri/<id>.hdr
   assets/CREDITS.txt, assets/files.json
@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MAP_KEYS = {"diff": ["diffuse", "diff"], "nor_gl": ["nor_gl"], "rough": ["rough", "roughness"]}
 
 
-def get(url, tries=4):
+def get(url, tries=8):
     for i in range(tries):
         try:
             with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=120) as r:
@@ -33,7 +33,7 @@ def get(url, tries=4):
         except Exception:  # noqa: BLE001
             if i == tries - 1:
                 raise
-            time.sleep(2 * (i + 1))
+            time.sleep(3 * (i + 1))
 
 
 def download(url, dest: Path):

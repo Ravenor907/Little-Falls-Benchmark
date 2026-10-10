@@ -1,8 +1,8 @@
 //! Minimal overlay during the graphics test and explore mode: live FPS,
 //! a thin progress line and status, kept out of the way of the scene.
 
-use super::theme::*;
 use super::loading::{LoadingFill, LoadingOverlay};
+use super::theme::*;
 use crate::bench::{Bench, Phase};
 use crate::config::Config;
 use crate::scene::water::LongExposure;

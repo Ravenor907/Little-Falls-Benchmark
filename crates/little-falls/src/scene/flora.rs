@@ -4,6 +4,7 @@
 
 use super::creek::{self, center, ground, ground_normal, half_width};
 use super::SceneObject;
+use crate::assets::Library;
 use crate::config::Quality;
 use crate::geom::{self, MeshData};
 use crate::noise::Rng;
@@ -140,11 +141,22 @@ pub fn spawn(
     materials: &mut Assets<StandardMaterial>,
     textures: &Textures,
     q: &Quality,
+    lib: Option<&Library>,
 ) {
     let mut rng = Rng::new(77);
+    // Scanned mossy bark when available, procedural otherwise.
+    let bark = lib.and_then(|l| l.surfaces.get("bark_brown_02"));
     let wood_mat = materials.add(StandardMaterial {
-        base_color: Color::WHITE,
-        base_color_texture: Some(textures.bark.clone()),
+        base_color: if bark.is_some() {
+            Color::srgb(0.85, 0.85, 0.8)
+        } else {
+            Color::WHITE
+        },
+        base_color_texture: Some(
+            bark.map(|b| b.albedo.clone())
+                .unwrap_or_else(|| textures.bark.clone()),
+        ),
+        normal_map_texture: bark.map(|b| b.normal.clone()),
         perceptual_roughness: 0.9,
         ..default()
     });
@@ -186,7 +198,14 @@ pub fn spawn(
         let (wood, foliage) = maple(&mut rng, root, lean, q.leaves_per_maple);
         commands.spawn((
             SceneObject,
-            Mesh3d(meshes.add(wood.build())),
+            Mesh3d(meshes.add({
+                let mut m = wood.build();
+                if bark.is_some() {
+                    // Normal mapping needs tangents.
+                    let _ = m.generate_tangents();
+                }
+                m
+            })),
             MeshMaterial3d(wood_mat.clone()),
             Transform::IDENTITY,
         ));
@@ -224,7 +243,10 @@ pub fn spawn(
         placed += 1;
     }
 
-    spawn_undergrowth(commands, meshes, materials, textures, q, &mut rng);
+    // With scanned assets, ferns and ground plants come from scans instead.
+    if lib.is_none() {
+        spawn_undergrowth(commands, meshes, materials, textures, q, &mut rng);
+    }
 }
 
 /// Round-leaved plants hugging the water and ferns on the damp banks,

@@ -27,8 +27,14 @@ fn enter(
     if let Some(f) = &data.frames {
         ms.extend(score::graphics_measurements(f));
     }
-    let (report, saved) =
-        crate::save_report(&config, &sys.0, &ms, data.frames.as_ref(), data.resolution, &data.warnings);
+    let (report, saved) = crate::save_report(
+        &config,
+        &sys.0,
+        &ms,
+        data.frames.as_ref(),
+        data.resolution,
+        &data.warnings,
+    );
     print_summary(&report.scores, data.frames.as_ref(), &saved);
     if config.exit_on_finish && config.screenshot_dir.is_none() {
         exit.write(AppExit::Success);

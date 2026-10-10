@@ -2,11 +2,26 @@
   "source": "Poly Haven (https://polyhaven.com), all assets CC0",
   "resolution": "2k",
   "textures": {
-    "forest_leaves_02": ["diff", "nor_gl", "rough"],
-    "brown_mud_leaves_01": ["diff", "nor_gl", "rough"],
-    "dark_rock": ["diff", "nor_gl", "rough"],
-    "bark_brown_02": ["diff", "nor_gl", "rough"],
-    "pine_bark": ["diff", "nor_gl", "rough"]
+    "forest_leaves_02": [
+      "diff",
+      "nor_gl"
+    ],
+    "brown_mud_leaves_01": [
+      "diff",
+      "nor_gl"
+    ],
+    "dark_rock": [
+      "diff",
+      "nor_gl"
+    ],
+    "bark_brown_02": [
+      "diff",
+      "nor_gl"
+    ],
+    "pine_bark": [
+      "diff",
+      "nor_gl"
+    ]
   },
   "models": [
     "rock_moss_set_01",
@@ -22,5 +37,7 @@
     "bark_debris_01",
     "fir_sapling"
   ],
-  "hdris": ["mossy_forest"]
+  "hdris": [
+    "mossy_forest"
+  ]
 }

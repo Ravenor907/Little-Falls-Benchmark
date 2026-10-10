@@ -13,6 +13,7 @@
     clippy::type_complexity
 )]
 
+mod assets;
 mod bench;
 mod camera;
 mod config;
@@ -103,7 +104,10 @@ fn install_crash_handler() {
     std::panic::set_hook(Box::new(move |info| {
         default_hook(info);
         let msg = info.to_string();
-        let dir = results::default_dir().parent().map(|p| p.to_path_buf()).unwrap_or_default();
+        let dir = results::default_dir()
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_default();
         let log = dir.join("crash.log");
         let _ = std::fs::create_dir_all(&dir);
         let _ = std::fs::write(
@@ -131,7 +135,12 @@ fn install_crash_handler() {
             .unwrap_or(false);
         if !shown {
             let _ = std::process::Command::new("zenity")
-                .args(["--error", "--title=Little Falls", "--no-wrap", &format!("--text={text}")])
+                .args([
+                    "--error",
+                    "--title=Little Falls",
+                    "--no-wrap",
+                    &format!("--text={text}"),
+                ])
                 .status();
         }
     }));
@@ -184,21 +193,48 @@ fn main() {
         ..default()
     };
 
+    let asset_root = assets::find_root();
+    match &asset_root {
+        Some(p) => println!("Assets: {}", p.display()),
+        None => println!("Assets: not found, using the procedural scene"),
+    }
+    let asset_plugin = AssetPlugin {
+        file_path: asset_root
+            .as_ref()
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "assets".into()),
+        ..default()
+    };
+
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(window),
-            ..default()
-        }))
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(window),
+                    ..default()
+                })
+                .set(asset_plugin),
+        )
+        .insert_resource(assets::AssetRoot(asset_root))
         .init_state::<AppState>()
         .insert_resource(config)
         .insert_resource(state::System(sys))
         .insert_resource(state::RunData::default())
-        .add_plugins((scene::ScenePlugin, ui::UiPlugin, bench::plugin, warmup::WarmupPlugin))
+        .add_plugins((
+            scene::ScenePlugin,
+            ui::UiPlugin,
+            bench::plugin,
+            warmup::WarmupPlugin,
+        ))
         .add_systems(PreStartup, state::detect_gpu)
-        .add_systems(Startup, (camera::spawn_camera, state::enter_loading))
+        .add_systems(
+            Startup,
+            (camera::spawn_camera, state::enter_loading, assets::start_loading),
+        )
         .add_systems(
             Update,
             (
+                assets::prepare_textures,
                 camera::update_camera_quality,
                 camera::ambient_camera.run_if(in_state(AppState::Menu)),
                 camera::ambient_camera.run_if(in_state(AppState::Results)),

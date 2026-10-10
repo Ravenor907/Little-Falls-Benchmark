@@ -215,7 +215,6 @@ pub struct Textures {
     pub round_leaf: Handle<Image>,
     pub fern: Handle<Image>,
     pub streaks: Handle<Image>,
-    pub silky: Handle<Image>,
     pub mist: Handle<Image>,
 }
 
@@ -229,7 +228,6 @@ impl Textures {
             round_leaf: images.add(round_leaf()),
             fern: images.add(fern()),
             streaks: images.add(water_streaks(false)),
-            silky: images.add(water_streaks(true)),
             mist: images.add(mist()),
         }
     }

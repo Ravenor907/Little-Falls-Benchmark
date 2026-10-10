@@ -89,10 +89,13 @@ pub fn ground_normal(x: f32, z: f32) -> Vec3 {
 }
 
 /// Terrain mesh with vertex colors for wet rock, moss and leaf litter.
-pub fn terrain(cell: f32) -> MeshData {
+/// Terrain mesh with vertex colors for the procedural look, plus layer
+/// weights (mud, rock) per vertex for the scanned-texture terrain shader.
+pub fn terrain(cell: f32) -> (MeshData, Vec<[f32; 2]>) {
     let nx = (2.0 * X_EXTENT / cell) as u32;
     let nz = ((Z_MAX - Z_MIN) / cell) as u32;
     let mut m = MeshData::default();
+    let mut weights = Vec::new();
     for j in 0..=nz {
         for i in 0..=nx {
             let x = -X_EXTENT + i as f32 * cell;
@@ -125,6 +128,9 @@ pub fn terrain(cell: f32) -> MeshData {
             }
             let uv = Vec2::new(x * 0.4, z * 0.4);
             m.vertex(Vec3::new(x, y, z), n, uv, [c[0], c[1], c[2], 1.0]);
+            let mud = 1.0 - smoothstep(-0.3, 2.2, d);
+            let rock = smoothstep(0.42, 0.72, steep) * (0.6 + 0.4 * mottle);
+            weights.push([mud, rock]);
         }
     }
     let row = nx + 1;
@@ -136,7 +142,7 @@ pub fn terrain(cell: f32) -> MeshData {
             m.tri(a + 1, b, b + 1);
         }
     }
-    m
+    (m, weights)
 }
 
 /// Water ribbon following the channel. `lift` raises the layer (the foam

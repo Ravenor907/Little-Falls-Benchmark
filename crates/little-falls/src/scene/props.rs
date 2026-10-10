@@ -4,6 +4,7 @@ use super::creek::{self, bed, center, ground, half_width};
 use super::SceneObject;
 use crate::geom::{self, MeshData};
 use crate::noise::{fbm3, Rng};
+use crate::textures::Textures;
 use bevy::prelude::*;
 
 /// A lumpy boulder with moss on its upper surfaces.
@@ -12,7 +13,7 @@ fn rock_mesh(seed: u32, detail: u32) -> MeshData {
     let s = seed as f32 * 7.31;
     for p in m.pos.iter_mut() {
         let v = Vec3::from(*p);
-        let big = fbm3(v.x * 1.1 + s, v.y * 1.1, v.z * 1.1, 3, seed) * 0.35;
+        let big = fbm3(v.x * 1.1 + s, v.y * 1.1, v.z * 1.1, 4, seed) * 0.45;
         let small = fbm3(v.x * 4.0, v.y * 4.0 + s, v.z * 4.0, 2, seed + 7) * 0.08;
         let mut q = v * (1.0 + big + small);
         // Flatten the base so rocks sit in the ground, and facet the top
@@ -30,7 +31,7 @@ fn rock_mesh(seed: u32, detail: u32) -> MeshData {
         let moss_mask = fbm3(p.x * 2.0, p.y * 2.0, p.z * 2.0 + s, 3, seed + 3) * 0.5 + 0.5;
         let moss = ((n.y - 0.35) * 2.5).clamp(0.0, 1.0) * ((moss_mask - 0.35) * 3.0).clamp(0.0, 1.0);
         let grain = fbm3(p.x * 9.0, p.y * 9.0, p.z * 9.0, 2, seed + 5) * 0.03;
-        let rock = [0.075 + grain, 0.078 + grain, 0.072 + grain];
+        let rock = [0.095 + grain, 0.088 + grain, 0.078 + grain];
         let green = [0.16, 0.28, 0.05];
         m.col[i] = [
             rock[0] * (1.0 - moss) + green[0] * moss,
@@ -68,11 +69,13 @@ pub fn spawn(
     commands: &mut Commands,
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<StandardMaterial>,
+    textures: &Textures,
     detail_high: bool,
 ) {
     let mut rng = Rng::new(31);
     let rock_mat = materials.add(StandardMaterial {
         base_color: Color::WHITE,
+        base_color_texture: Some(textures.rock.clone()),
         // Wet rock is fairly glossy.
         perceptual_roughness: 0.38,
         reflectance: 0.45,
@@ -100,7 +103,7 @@ pub fn spawn(
         z += rng.range(0.6, 2.2);
         for side in [-1.0f32, 1.0] {
             let x = center(z) + side * (half_width(z) + rng.range(-0.3, 1.2));
-            let s = rng.range(0.4, 1.4);
+            let s = rng.range(0.35, 1.1);
             let pos = Vec3::new(x, ground(x, z) + 0.05 * s, z);
             let size = Vec3::new(s * rng.range(0.8, 1.5), s * rng.range(0.5, 0.9), s);
             place_rock(commands, &mut rng, pos, size);
@@ -119,8 +122,8 @@ pub fn spawn(
     for (k, p) in creek::plunge_points().iter().enumerate() {
         let z_lip = p.z - 2.2;
         for side in [-1.0f32, 1.0] {
-            let x = center(z_lip) + side * (half_width(z_lip) + 0.3);
-            let s = rng.range(1.6, 2.4);
+            let x = center(z_lip) + side * (half_width(z_lip) + 0.9);
+            let s = rng.range(1.0, 1.6);
             place_rock(
                 commands,
                 &mut rng,
@@ -129,7 +132,7 @@ pub fn spawn(
             );
         }
         if k != 1 {
-            let s = rng.range(0.7, 1.0);
+            let s = rng.range(0.45, 0.65);
             place_rock(
                 commands,
                 &mut rng,
@@ -138,9 +141,9 @@ pub fn spawn(
             );
         }
         // Rubble in each plunge pool.
-        for _ in 0..5 {
-            let s = rng.range(0.25, 0.55);
-            let pos = *p + Vec3::new(rng.range(-1.6, 1.6), -0.25, rng.range(0.3, 2.5));
+        for _ in 0..3 {
+            let s = rng.range(0.2, 0.4);
+            let pos = *p + Vec3::new(rng.range(-1.6, 1.6), -0.25, rng.range(0.8, 2.5));
             place_rock(commands, &mut rng, pos, Vec3::splat(s));
         }
     }
@@ -183,6 +186,7 @@ pub fn spawn(
     ];
     let log_mat = materials.add(StandardMaterial {
         base_color: Color::WHITE,
+        base_color_texture: Some(textures.bark.clone()),
         perceptual_roughness: 0.85,
         ..default()
     });

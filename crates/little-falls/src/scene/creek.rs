@@ -106,8 +106,8 @@ pub fn terrain(cell: f32) -> MeshData {
 
             // Base palette (linear-ish sRGB values, converted by the GPU).
             let wet_rock = [0.07, 0.075, 0.07];
-            let moss = [0.20 + 0.1 * mottle, 0.32 + 0.12 * mottle, 0.07];
-            let litter = [0.30 + 0.08 * mottle, 0.22 + 0.05 * mottle, 0.13];
+            let moss = [0.14 + 0.08 * mottle, 0.24 + 0.10 * mottle, 0.06];
+            let litter = [0.26 + 0.08 * mottle, 0.18 + 0.05 * mottle, 0.11];
             let dirt = [0.22, 0.17, 0.12];
 
             // Near and below the waterline everything is dark wet rock.
@@ -123,7 +123,7 @@ pub fn terrain(cell: f32) -> MeshData {
                 let dry = ground_col * (1.0 - rocky) + (slope_col * 0.6 + wet_rock[k] * 0.4) * rocky;
                 c[k] = dry * (1.0 - wet) + wet_rock[k] * wet;
             }
-            let uv = Vec2::new(x * 0.25, z * 0.25);
+            let uv = Vec2::new(x * 0.4, z * 0.4);
             m.vertex(Vec3::new(x, y, z), n, uv, [c[0], c[1], c[2], 1.0]);
         }
     }

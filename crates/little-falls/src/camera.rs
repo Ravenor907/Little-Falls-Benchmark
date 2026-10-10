@@ -41,7 +41,7 @@ pub fn spawn_camera(mut commands: Commands, config: Res<Config>) {
             color: Color::srgba(0.62, 0.72, 0.74, 1.0),
             directional_light_color: Color::srgba(1.0, 0.95, 0.8, 0.5),
             directional_light_exponent: 20.0,
-            falloff: FogFalloff::Exponential { density: 0.012 },
+            falloff: FogFalloff::Exponential { density: 0.006 },
         },
         MainCamera,
     ));
@@ -90,25 +90,26 @@ pub fn update_camera_quality(
     }
 }
 
-/// Key frames: (camera position, look target). The path opens on the
-/// view of the reference photos, looking up the cascade from the plunge
-/// pool, then climbs the falls, flies upstream under the canopy, rises
-/// into the light shafts and returns to the pool.
+/// Key frames: (camera position, look target), offsets from the creek
+/// center and bed. The path stays low, under the canopy: it opens on the
+/// view of the reference photos looking up the cascade, climbs beside
+/// the falls, crosses above the logjam, follows the creek upstream, then
+/// turns back and descends the cascade to the plunge pool.
 fn keys() -> Vec<(Vec3, Vec3)> {
     let at = |x: f32, dy: f32, z: f32| Vec3::new(center(z) + x, bed(z) + dy, z);
     vec![
-        (at(1.5, 1.6, 14.0), at(0.0, 2.0, -8.0)),
-        (at(-1.5, 2.0, 9.0), at(0.0, 3.0, -10.0)),
-        (at(3.0, 2.5, 2.0), at(-0.5, 2.0, -9.0)),
-        (at(2.5, 2.0, -6.0), at(0.0, 1.0, -14.0)),
-        (at(-1.0, 2.5, -13.0), at(0.0, 1.0, -26.0)),
-        (at(0.5, 2.2, -24.0), at(0.0, 3.0, -40.0)),
-        (at(-2.0, 6.0, -36.0), at(2.0, 10.0, -55.0)),
-        (at(1.0, 12.0, -42.0), at(0.0, 4.0, -20.0)),
-        (at(4.0, 10.0, -20.0), at(0.0, 0.0, -6.0)),
-        (at(5.0, 8.0, -4.0), at(0.0, 0.0, 4.0)),
-        (at(2.5, 3.0, 8.0), at(0.0, 2.0, -6.0)),
-        (at(1.5, 1.6, 14.0), at(0.0, 2.0, -8.0)),
+        (at(1.2, 2.4, 10.0), at(0.0, 4.5, -10.0)),
+        (at(-1.5, 2.2, 6.0), at(0.0, 5.0, -10.0)),
+        (at(2.8, 3.0, 0.0), at(-0.5, 3.0, -9.0)),
+        (at(2.0, 2.5, -7.0), at(0.0, 1.5, -14.0)),
+        (at(1.5, 4.5, -11.0), at(0.0, 2.0, -24.0)),
+        (at(0.0, 2.4, -22.0), at(0.0, 3.0, -38.0)),
+        (at(-1.0, 3.0, -34.0), at(1.5, 5.0, -55.0)),
+        (at(-2.5, 3.5, -40.0), at(0.0, 2.0, -24.0)),
+        (at(3.5, 3.5, -20.0), at(0.0, 1.0, -6.0)),
+        (at(4.0, 3.5, -2.0), at(0.0, 0.0, 6.0)),
+        (at(2.5, 2.8, 6.0), at(0.0, 3.0, -8.0)),
+        (at(1.2, 2.4, 10.0), at(0.0, 4.5, -10.0)),
     ]
 }
 

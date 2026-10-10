@@ -156,8 +156,61 @@ pub fn mist() -> Image {
     })
 }
 
+/// Tileable fractal noise in 0..1 from periodic value noise octaves.
+fn periodic_fbm(u: f32, v: f32, base: i32, octaves: u32, seed: u32) -> f32 {
+    let (mut sum, mut amp, mut norm, mut f) = (0.0, 1.0, 0.0, base);
+    for o in 0..octaves {
+        sum += amp * periodic_noise(u * f as f32, v * f as f32, f, f, seed + o);
+        norm += amp;
+        amp *= 0.5;
+        f *= 2;
+    }
+    sum / norm
+}
+
+/// Forest floor detail: leaf litter, twigs and soil, in grayscale so the
+/// terrain's vertex colors set the hue. Averages near 0.85.
+pub fn ground_detail() -> Image {
+    make(256, 256, true, |u, v| {
+        let n = periodic_fbm(u, v, 8, 5, 21);
+        let leaves = smoothstep(0.55, 0.62, periodic_noise(u * 40.0, v * 40.0, 40, 40, 33));
+        let twig = 1.0
+            - smoothstep(
+                0.0,
+                0.04,
+                (periodic_noise(u * 6.0, v * 30.0, 6, 30, 41) - 0.5).abs(),
+            );
+        let g = 0.62 + 0.38 * n + 0.18 * leaves - 0.25 * twig;
+        [g, g * 0.98, g * 0.95, 1.0]
+    })
+}
+
+/// Granite-like speckle and cracks for boulders.
+pub fn rock_detail() -> Image {
+    make(256, 256, true, |u, v| {
+        let n = periodic_fbm(u, v, 4, 6, 51);
+        let speck = periodic_noise(u * 96.0, v * 96.0, 96, 96, 57);
+        let crack = 1.0 - smoothstep(0.0, 0.025, (periodic_fbm(u, v, 3, 4, 61) - 0.5).abs());
+        let g = 0.65 + 0.35 * n + 0.15 * (speck - 0.5) - 0.35 * crack;
+        [g, g, g * 0.97, 1.0]
+    })
+}
+
+/// Furrowed bark: vertical ridges with some horizontal breaks.
+pub fn bark() -> Image {
+    make(128, 256, true, |u, v| {
+        let ridges = periodic_noise(u * 16.0, v * 2.0, 16, 2, 71);
+        let breaks = periodic_noise(u * 8.0, v * 24.0, 8, 24, 73);
+        let g = 0.55 + 0.45 * smoothstep(0.25, 0.75, ridges) - 0.15 * smoothstep(0.7, 0.9, breaks);
+        [g, g * 0.97, g * 0.94, 1.0]
+    })
+}
+
 #[derive(Resource)]
 pub struct Textures {
+    pub ground: Handle<Image>,
+    pub rock: Handle<Image>,
+    pub bark: Handle<Image>,
     pub maple_leaf: Handle<Image>,
     pub round_leaf: Handle<Image>,
     pub fern: Handle<Image>,
@@ -169,6 +222,9 @@ pub struct Textures {
 impl Textures {
     pub fn create(images: &mut Assets<Image>) -> Self {
         Self {
+            ground: images.add(ground_detail()),
+            rock: images.add(rock_detail()),
+            bark: images.add(bark()),
             maple_leaf: images.add(maple_leaf()),
             round_leaf: images.add(round_leaf()),
             fern: images.add(fern()),

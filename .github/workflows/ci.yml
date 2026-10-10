@@ -71,7 +71,7 @@ jobs:
         run: |
           timeout 900 xvfb-run -a -s "-screen 0 1280x720x24" \
             ./target/release/little-falls --run graphics --preset high \
-              --windowed 960x540 --warmup 45 --duration 90 --exit-on-finish \
+              --windowed 960x540 --warmup 45 --duration 90 --exit-on-finish --no-motion-blur \
               --screenshots ci-out/screens --out ci-out/results \
             > ci-out/6-graphics.log 2>&1 || echo graphics >> ci-out/FAILED
 

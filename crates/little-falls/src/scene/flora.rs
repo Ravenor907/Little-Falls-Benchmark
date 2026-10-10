@@ -100,14 +100,14 @@ fn fir(rng: &mut Rng) -> MeshData {
     let h = rng.range(26.0, 36.0);
     let trunk = geom::cylinder(0.55, 0.12, h, 10, 4).paint(bark_color(rng, 0.15));
     m.append(&trunk, Mat4::IDENTITY);
-    let layers = 11;
+    let layers = 14;
     for i in 0..layers {
         let t = i as f32 / layers as f32;
-        let y = h * (0.32 + 0.66 * t);
+        let y = h * (0.25 + 0.72 * t);
         let r = (1.0 - t).powf(0.9) * rng.range(3.2, 4.2) + 0.4;
-        let ch = r * 0.9;
+        let ch = r * 1.5;
         let g = rng.range(-0.015, 0.015);
-        let cone = geom::cone(r, ch, 12).paint([0.045 + g, 0.11 + g, 0.05, 1.0]);
+        let cone = geom::cone(r, ch, 12).paint([0.035 + g, 0.085 + g, 0.04, 1.0]);
         m.append(
             &cone,
             Mat4::from_rotation_translation(
@@ -129,6 +129,7 @@ pub fn spawn(
     let mut rng = Rng::new(77);
     let wood_mat = materials.add(StandardMaterial {
         base_color: Color::WHITE,
+        base_color_texture: Some(textures.bark.clone()),
         perceptual_roughness: 0.9,
         ..default()
     });

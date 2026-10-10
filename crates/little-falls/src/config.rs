@@ -145,6 +145,7 @@ pub struct Config {
     pub screenshot_dir: Option<std::path::PathBuf>,
     /// Capture the menu after shaders settle, then quit (CI).
     pub menu_screenshot: Option<std::path::PathBuf>,
+    pub no_motion_blur: bool,
 }
 
 pub const HELP: &str = "\
@@ -193,6 +194,7 @@ impl Config {
             warmup: 5.0,
             screenshot_dir: None,
             menu_screenshot: None,
+            no_motion_blur: false,
         };
         let mut args = std::env::args().skip(1);
         while let Some(a) = args.next() {
@@ -241,11 +243,17 @@ impl Config {
                         .ok_or("--warmup must be a number >= 0")?;
                 }
                 "--screenshots" => c.screenshot_dir = Some(val("--screenshots")?.into()),
+                // Motion blur scales with frame time, so at CI's ~1 fps it
+                // smears everything; screenshots for review turn it off.
+                "--no-motion-blur" => c.no_motion_blur = true,
                 "--menu-screenshot" => c.menu_screenshot = Some(val("--menu-screenshot")?.into()),
                 other => return Err(format!("unknown option '{other}'")),
             }
         }
         c.quality = c.preset.quality();
+        if c.no_motion_blur {
+            c.quality.motion_blur = false;
+        }
         Ok(c)
     }
 }

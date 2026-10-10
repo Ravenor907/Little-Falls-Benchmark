@@ -100,6 +100,7 @@ fn setup(
     // Terrain.
     let ground_mat = materials.add(StandardMaterial {
         base_color: Color::WHITE,
+        base_color_texture: Some(textures.ground.clone()),
         perceptual_roughness: 0.85,
         ..default()
     });
@@ -110,7 +111,13 @@ fn setup(
         Transform::IDENTITY,
     ));
 
-    props::spawn(&mut commands, &mut meshes, &mut materials, q.terrain_cell <= 0.5);
+    props::spawn(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        &textures,
+        q.terrain_cell <= 0.5,
+    );
     flora::spawn(&mut commands, &mut meshes, &mut materials, &textures, &q);
     water::spawn(&mut commands, &mut meshes, &mut materials, &textures, &q);
     wildlife::spawn(&mut commands, &mut meshes, &mut materials, &q);
@@ -121,7 +128,7 @@ fn setup(
         SceneObject,
         DirectionalLight {
             color: Color::srgb(1.0, 0.95, 0.85),
-            illuminance: 12_000.0,
+            illuminance: 15_000.0,
             shadows_enabled: true,
             ..default()
         },
@@ -141,7 +148,7 @@ fn setup(
     // Soft sky light filling the shadows with a cool tint.
     commands.insert_resource(AmbientLight {
         color: Color::srgb(0.75, 0.85, 1.0),
-        brightness: 350.0,
+        brightness: 220.0,
         ..default()
     });
 
@@ -152,7 +159,7 @@ fn setup(
             SceneObject,
             FogVolume {
                 fog_color: Color::srgb(0.95, 0.97, 1.0),
-                density_factor: 0.035,
+                density_factor: 0.012,
                 absorption: 0.25,
                 scattering: 0.35,
                 scattering_asymmetry: 0.75,

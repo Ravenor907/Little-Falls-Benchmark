@@ -114,7 +114,7 @@ pub fn spawn(
 
     // Mist puffs hanging over the plunge pools.
     let mist_mat = materials.add(StandardMaterial {
-        base_color: Color::srgba(0.9, 0.95, 1.0, 0.22),
+        base_color: Color::srgba(0.9, 0.95, 1.0, 0.09),
         base_color_texture: Some(textures.mist.clone()),
         alpha_mode: AlphaMode::Blend,
         unlit: true,
@@ -132,7 +132,7 @@ pub fn spawn(
             SceneObject,
             Mesh3d(quad.clone()),
             MeshMaterial3d(mist_mat.clone()),
-            Transform::from_translation(anchor).with_scale(Vec3::splat(rng.range(1.5, 3.5))),
+            Transform::from_translation(anchor).with_scale(Vec3::splat(rng.range(1.2, 2.6))),
             Mist {
                 anchor,
                 phase: rng.range(0.0, std::f32::consts::TAU),

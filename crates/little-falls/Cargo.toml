@@ -1,0 +1,16 @@
+[package]
+name = "little-falls"
+description = "Little Falls: a Northern California forest waterfall GPU, CPU and memory benchmark for Linux"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "little-falls"
+path = "src/main.rs"
+
+[dependencies]
+lf-core = { path = "../lf-core" }
+# Pinned to a minor version: Bevy's API changes between minor releases.
+bevy = { version = "0.16", features = ["wayland"] }

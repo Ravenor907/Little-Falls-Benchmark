@@ -1,0 +1,8 @@
+[package]
+name = "lf-core"
+description = "CPU and memory benchmarks, system info and results format for Little Falls (no external dependencies)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]

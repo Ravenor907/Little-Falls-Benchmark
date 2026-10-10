@@ -1,0 +1,5 @@
+/target
+/dist
+/ci-results
+/ci-screens
+*.AppImage

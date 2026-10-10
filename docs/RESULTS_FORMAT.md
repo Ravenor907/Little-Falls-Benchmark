@@ -12,10 +12,10 @@ Each run writes `little-falls-<unix time>.json` to
   "nickname": "",
   "scores": { "overall": 1000, "graphics": 1000, "cpu": 1000, "memory": 1000 },
   "system": {
-    "cpu": "Intel(R) Core(TM) i9-14900K",
+    "cpu": "Example 16-core CPU",
     "cpu_threads": 32,
     "ram_mib": 31842,
-    "gpu": "AMD Radeon RX 9070 XT (RADV GFX1201)",
+    "gpu": "Example GPU (RADV)",
     "gpu_driver": "radv Mesa 25.x",
     "gpu_backend": "Vulkan",
     "os": "Bazzite 42",

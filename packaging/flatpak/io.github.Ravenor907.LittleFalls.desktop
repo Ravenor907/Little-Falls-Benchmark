@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Little Falls
+GenericName=System Benchmark
+Comment=Graphics, CPU and memory benchmark
+Exec=little-falls
+Icon=io.github.Ravenor907.LittleFalls
+Terminal=false
+Categories=Game;System;Monitor;
+Keywords=benchmark;gpu;cpu;vulkan;performance;

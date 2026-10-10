@@ -124,7 +124,9 @@ pub fn fern() -> Image {
 /// Tileable white water streaks. `silky` produces the long exposure look
 /// from slow shutter photos: soft, stretched and continuous.
 pub fn water_streaks(silky: bool) -> Image {
-    make(128, 256, true, move |u, v| {
+    // 256x512 with soft edges: magnified on the falls, so it must not
+    // look blocky.
+    make(256, 512, true, move |u, v| {
         let (sx, sy) = if silky { (24.0, 2.0) } else { (32.0, 6.0) };
         let n1 = periodic_noise(u * sx, v * sy, sx as i32, sy as i32, 7);
         let n2 = periodic_noise(
@@ -139,8 +141,8 @@ pub fn water_streaks(silky: bool) -> Image {
         let alpha = if silky {
             smoothstep(0.25, 0.75, n) * 0.85 + 0.15
         } else {
-            let bubbles = smoothstep(0.62, 0.7, periodic_noise(u * 48.0, v * 96.0, 48, 96, 19));
-            (smoothstep(0.45, 0.8, n) + bubbles * 0.6).min(1.0)
+            let bubbles = smoothstep(0.6, 0.75, periodic_noise(u * 48.0, v * 96.0, 48, 96, 19));
+            (smoothstep(0.35, 0.85, n) + bubbles * 0.5).min(1.0)
         };
         [0.95, 0.97, 1.0, alpha]
     })
@@ -215,7 +217,6 @@ pub struct Textures {
     pub round_leaf: Handle<Image>,
     pub fern: Handle<Image>,
     pub streaks: Handle<Image>,
-    pub silky: Handle<Image>,
     pub mist: Handle<Image>,
 }
 
@@ -229,7 +230,6 @@ impl Textures {
             round_leaf: images.add(round_leaf()),
             fern: images.add(fern()),
             streaks: images.add(water_streaks(false)),
-            silky: images.add(water_streaks(true)),
             mist: images.add(mist()),
         }
     }

@@ -7,6 +7,7 @@ pub const TEXT: Color = Color::srgba(0.95, 0.97, 0.95, 0.94);
 pub const TEXT_DIM: Color = Color::srgba(0.85, 0.90, 0.86, 0.58);
 pub const TEXT_FAINT: Color = Color::srgba(0.85, 0.90, 0.86, 0.36);
 pub const ACCENT: Color = Color::srgb(0.62, 0.86, 0.55);
+pub const WARN: Color = Color::srgb(0.95, 0.70, 0.25);
 pub const ACCENT_DEEP: Color = Color::srgb(0.20, 0.34, 0.20);
 pub const PANEL: Color = Color::srgba(0.035, 0.05, 0.045, 0.74);
 pub const CARD: Color = Color::srgba(1.0, 1.0, 1.0, 0.045);
@@ -98,7 +99,7 @@ pub fn root(justify: JustifyContent, align: AlignItems) -> Node {
     }
 }
 
-/// A key/value row such as "GPU   AMD Radeon RX 9070 XT".
+/// A key/value row such as "GPU   <adapter name>".
 pub fn spec_row(parent: &mut ChildSpawnerCommands, fonts: &Fonts, key: &str, value: &str) {
     parent
         .spawn(Node {

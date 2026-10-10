@@ -9,12 +9,12 @@ the canopy, ambient occlusion, backlit maple leaves, ferns, flocking birds
 and butterflies. Partway through, the water switches to a long exposure
 look, like a slow shutter photo.
 
-Built in Rust on [Bevy](https://bevyengine.org) and Vulkan. Every model and
-texture is generated in code, so the repository holds no art assets and
-every machine renders exactly the same scene.
+Built in Rust on [Bevy](https://bevyengine.org) and Vulkan, with
+photo-scanned rocks, plants, wood, ground surfaces and sky lighting from
+[Poly Haven](https://polyhaven.com) (CC0).
 
-> **Status:** early development. Scores are provisional until the
-> reference machine is calibrated (see [Scoring](#scoring)).
+> **Status:** early development. Scores may change between versions
+> while the tests are tuned; results record the scoring version.
 
 ## Supported systems
 
@@ -25,32 +25,59 @@ Built for gaming-focused Linux distros, including handhelds:
 - Nobara, CachyOS, ChimeraOS
 - Any modern x86_64 distro with a Vulkan driver (Mesa RADV, ANV, NVIDIA)
 
-## Running it
+## Install
 
-No installation. Download one file from [Releases](../../releases) and run
-it:
+**One command, straight from GitHub** (no root needed, works on SteamOS
+and Bazzite):
 
 ```sh
-chmod +x LittleFalls-*.AppImage
-./LittleFalls-*.AppImage
+curl -fsSL https://raw.githubusercontent.com/Ravenor907/Little-Falls-Benchmark/main/install.sh | sh
 ```
 
-(Or double-click it in your file manager.) On SteamOS or Bazzite game mode,
-add it to Steam as a non-Steam game and launch it from there.
+It installs the Flatpak when Flatpak is available, otherwise the
+AppImage, and adds Little Falls to your application menu. Run it again to
+update; `sh install.sh --uninstall` removes it.
+
+**Or download from [Releases](../../releases):**
+
+- `LittleFalls.flatpak`: `flatpak install --user LittleFalls.flatpak`
+- `LittleFalls-*.AppImage`: no install at all, just
+  `chmod +x LittleFalls-*.AppImage` and run it
+- `little-falls-*.tar.gz`: the plain binary with its assets folder
+
+On SteamOS or Bazzite game mode, add Little Falls to Steam as a non-Steam
+game (from desktop mode) and launch it from there.
+
+## Using it
 
 The app opens on the waterfall with a menu:
 
 - **Run benchmark**: CPU and memory tests, then the graphics flythrough
   (about two minutes)
 - **Graphics only** / **CPU and memory**: run one part
-- **Explore scene**: fly around freely
+- **History**: your previous runs
+- **Explore**: fly around the scene freely
 - **Quality**: Low, Medium, High (the standard scoreboard test) or Ultra
 
 Mouse, keyboard and gamepad all work: arrows or D-pad to move, Enter or A
 to select, Esc or B to go back. `L` / Y toggles long exposure water.
 
 Results are shown in the app and saved to
-`~/.local/share/little-falls/results/` for scoreboard submission.
+`~/.local/share/little-falls/results/` (Flatpak:
+`~/.var/app/io.github.Ravenor907.LittleFalls/data/little-falls/results/`).
+
+### Reliable results
+
+Little Falls checks its own measurements:
+
+- Shaders are compiled before timing starts (the camera pre-flies the
+  whole path behind a loading screen), so compile stutter is not counted
+- Every CPU and memory test is repeated; large run-to-run variation is
+  flagged
+- A frame rate pinned to a display refresh rate (vsync or a frame
+  limiter such as gamescope's) is detected and flagged
+- Flagged runs show a warning on the results screen and in the results
+  file
 
 ### Command line options
 
@@ -79,19 +106,13 @@ starts.
 
 ## Scoring
 
-Each test is compared with a reference machine: **Intel Core i9-14900K,
-DDR5-6000, AMD Radeon RX 9070 XT, `high` preset at 2560x1440.** That
-system scores about **1000** in every category. A system twice as fast
-scores 2000; half as fast, 500.
-
-Category scores are geometric means of their tests, and the overall score
-is a weighted geometric mean: graphics 50%, CPU 30%, memory 20%.
+Higher is better. Each test converts its measurement to points linearly,
+so a system twice as fast scores twice as many points. Category scores
+are geometric means of their tests, and the overall score is a weighted
+geometric mean: graphics 50%, CPU 30%, memory 20%.
 
 Graphics scores are only comparable at the same preset and resolution.
 The scoreboard groups them accordingly.
-
-The current reference values are estimates. Once the benchmark has run on
-the reference hardware they will be locked in and `score_version` bumped.
 
 ## Scoreboard
 
@@ -104,21 +125,29 @@ results format is documented in [docs/RESULTS_FORMAT.md](docs/RESULTS_FORMAT.md)
 ```sh
 # Debian/Ubuntu build dependencies
 sudo apt install pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+python3 tools/fetch_assets.py      # downloads the CC0 art assets (~170 MB)
 cargo build --release
 ./target/release/little-falls
 ```
+
+Without the assets folder the app still runs, with a simpler fully
+procedural scene.
 
 ## Project layout
 
 ```
 crates/lf-core       CPU and memory tests, scoring, results file (no dependencies)
-crates/little-falls  The Bevy app: scene, camera flythrough, benchmark runner
-packaging/appimage   AppImage packaging
+crates/lf-image      Mipmaps, HDR decoding, image based lighting (no dependencies)
+crates/little-falls  The Bevy app: scene, shaders, flythrough, interface
+tools/               Asset manifest and fetcher
+packaging/           AppImage and Flatpak packaging
+install.sh           One-line installer
 ```
 
 ## License
 
 GPL-3.0. See [LICENSE](LICENSE).
 
-The embedded [Inter](https://rsms.me/inter/) font is licensed under the SIL Open Font
+Art assets are CC0 from [Poly Haven](https://polyhaven.com); see
+`assets/CREDITS.txt` after fetching. The embedded [Inter](https://rsms.me/inter/) font is licensed under the SIL Open Font
 License 1.1 ([crates/little-falls/assets/fonts/OFL.txt](crates/little-falls/assets/fonts/OFL.txt)).

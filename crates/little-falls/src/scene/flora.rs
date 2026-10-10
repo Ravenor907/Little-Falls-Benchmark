@@ -3,7 +3,9 @@
 //! the water.
 
 use super::creek::{self, center, ground, ground_normal, half_width};
+use super::materials::{windy, WindMaterial, WindParams};
 use super::SceneObject;
+use crate::assets::Library;
 use crate::config::Quality;
 use crate::geom::{self, MeshData};
 use crate::noise::Rng;
@@ -134,32 +136,48 @@ fn fir(rng: &mut Rng) -> MeshData {
     m
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn spawn(
     commands: &mut Commands,
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<StandardMaterial>,
+    wind_materials: &mut Assets<WindMaterial>,
     textures: &Textures,
     q: &Quality,
+    lib: Option<&Library>,
 ) {
     let mut rng = Rng::new(77);
+    // Scanned mossy bark when available, procedural otherwise.
+    let bark = lib.and_then(|l| l.surfaces.get("bark_brown_02"));
     let wood_mat = materials.add(StandardMaterial {
-        base_color: Color::WHITE,
-        base_color_texture: Some(textures.bark.clone()),
+        base_color: if bark.is_some() {
+            Color::srgb(0.85, 0.85, 0.8)
+        } else {
+            Color::WHITE
+        },
+        base_color_texture: Some(
+            bark.map(|b| b.albedo.clone())
+                .unwrap_or_else(|| textures.bark.clone()),
+        ),
+        normal_map_texture: bark.map(|b| b.normal.clone()),
         perceptual_roughness: 0.9,
         ..default()
     });
-    let maple_leaf_mat = materials.add(StandardMaterial {
-        base_color: Color::WHITE,
-        base_color_texture: Some(textures.maple_leaf.clone()),
-        alpha_mode: AlphaMode::Mask(0.5),
-        double_sided: true,
-        cull_mode: None,
-        perceptual_roughness: 0.6,
-        // Light passing through the leaves gives the bright backlit glow
-        // of maples in the reference photos.
-        diffuse_transmission: 0.55,
-        ..default()
-    });
+    let maple_leaf_mat = wind_materials.add(windy(
+        StandardMaterial {
+            base_color: Color::WHITE,
+            base_color_texture: Some(textures.maple_leaf.clone()),
+            alpha_mode: AlphaMode::Mask(0.5),
+            double_sided: true,
+            cull_mode: None,
+            perceptual_roughness: 0.6,
+            // Light passing through the leaves gives the bright backlit
+            // glow of maples in the reference photos.
+            diffuse_transmission: 0.55,
+            ..default()
+        },
+        WindParams::LEAVES,
+    ));
     let needles_mat = materials.add(StandardMaterial {
         base_color: Color::WHITE,
         perceptual_roughness: 0.95,
@@ -183,10 +201,24 @@ pub fn spawn(
             continue;
         }
         let lean = Vec3::new(-side, 0.0, rng.range(-0.3, 0.3)).normalize();
+        // Trunks lean over the creek; keep them out of the camera's path.
+        let reach = root + lean * 3.5;
+        if crate::camera::distance_to_path_xz(root.x, root.z) < 2.2
+            || crate::camera::distance_to_path_xz(reach.x, reach.z) < 2.2
+        {
+            continue;
+        }
         let (wood, foliage) = maple(&mut rng, root, lean, q.leaves_per_maple);
         commands.spawn((
             SceneObject,
-            Mesh3d(meshes.add(wood.build())),
+            Mesh3d(meshes.add({
+                let mut m = wood.build();
+                if bark.is_some() {
+                    // Normal mapping needs tangents.
+                    let _ = m.generate_tangents();
+                }
+                m
+            })),
             MeshMaterial3d(wood_mat.clone()),
             Transform::IDENTITY,
         ));
@@ -199,7 +231,31 @@ pub fn spawn(
         placed += 1;
     }
 
-    // Firs: a handful of shared variants, instanced up the ravine walls.
+    // Firs: the scanned fir sapling grown to full size when available.
+    let scanned_firs = lib.map(|l| l.pieces("fir_sapling").to_vec()).unwrap_or_default();
+    if !scanned_firs.is_empty() {
+        let mut placed = 0;
+        let mut tries = 0;
+        while placed < q.conifers && tries < q.conifers * 50 {
+            tries += 1;
+            let z = rng.range(creek::Z_MIN, creek::Z_MAX);
+            let x = rng.range(-creek::X_EXTENT + 2.0, creek::X_EXTENT - 2.0);
+            if (x - center(z)).abs() < 9.0 || crate::camera::distance_to_path_xz(x, z) < 3.0 {
+                continue;
+            }
+            let piece = &scanned_firs[(rng.u64() % scanned_firs.len() as u64) as usize];
+            let s = rng.range(16.0, 30.0) / piece.size().y.max(0.1);
+            let tf = Transform::from_xyz(x, ground(x, z) - 0.3, z)
+                .with_rotation(Quat::from_rotation_y(rng.range(0.0, std::f32::consts::TAU)))
+                .with_scale(Vec3::splat(s));
+            for (mesh, mat) in &piece.prims {
+                commands.spawn((SceneObject, Mesh3d(mesh.clone()), MeshMaterial3d(mat.clone()), tf));
+            }
+            placed += 1;
+        }
+        return;
+    }
+    // Procedural firs: a handful of shared variants, instanced up the walls.
     let fir_variants: Vec<Handle<Mesh>> = (0..5).map(|_| meshes.add(fir(&mut rng).build())).collect();
     let mut placed = 0;
     let mut tries = 0;
@@ -224,7 +280,10 @@ pub fn spawn(
         placed += 1;
     }
 
-    spawn_undergrowth(commands, meshes, materials, textures, q, &mut rng);
+    // With scanned assets, ferns and ground plants come from scans instead.
+    if lib.is_none() {
+        spawn_undergrowth(commands, meshes, materials, textures, q, &mut rng);
+    }
 }
 
 /// Round-leaved plants hugging the water and ferns on the damp banks,

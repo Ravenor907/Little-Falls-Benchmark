@@ -89,10 +89,13 @@ pub fn ground_normal(x: f32, z: f32) -> Vec3 {
 }
 
 /// Terrain mesh with vertex colors for wet rock, moss and leaf litter.
-pub fn terrain(cell: f32) -> MeshData {
+/// Terrain mesh with vertex colors for the procedural look, plus layer
+/// weights (mud, rock) per vertex for the scanned-texture terrain shader.
+pub fn terrain(cell: f32) -> (MeshData, Vec<[f32; 2]>) {
     let nx = (2.0 * X_EXTENT / cell) as u32;
     let nz = ((Z_MAX - Z_MIN) / cell) as u32;
     let mut m = MeshData::default();
+    let mut weights = Vec::new();
     for j in 0..=nz {
         for i in 0..=nx {
             let x = -X_EXTENT + i as f32 * cell;
@@ -125,6 +128,9 @@ pub fn terrain(cell: f32) -> MeshData {
             }
             let uv = Vec2::new(x * 0.4, z * 0.4);
             m.vertex(Vec3::new(x, y, z), n, uv, [c[0], c[1], c[2], 1.0]);
+            let mud = 1.0 - smoothstep(-0.3, 2.2, d);
+            let rock = smoothstep(0.42, 0.72, steep) * (0.6 + 0.4 * mottle);
+            weights.push([mud, rock]);
         }
     }
     let row = nx + 1;
@@ -136,7 +142,7 @@ pub fn terrain(cell: f32) -> MeshData {
             m.tri(a + 1, b, b + 1);
         }
     }
-    m
+    (m, weights)
 }
 
 /// Water ribbon following the channel. `lift` raises the layer (the foam
@@ -166,9 +172,23 @@ pub fn water_ribbon(lift: f32, foam: bool) -> MeshData {
             // Water humps slightly in the middle and hugs the bed.
             let y = b + 0.12 + lift + 0.05 * (1.0 - edge * edge);
             let alpha = if foam {
+                // Whitewater on the drops and in the churn just below
+                // them; pools stay mostly clear, with a little foam
+                // along the banks.
                 let white = (s * 1.3).min(1.0);
-                let edges = smoothstep(0.75, 1.0, edge) * 0.5;
-                (0.4 + 0.6 * white + edges).min(1.0)
+                let churn = plunge_points()
+                    .iter()
+                    .map(|p| {
+                        let d = z - p.z;
+                        if (0.0..4.0).contains(&d) {
+                            1.0 - d / 4.0
+                        } else {
+                            0.0
+                        }
+                    })
+                    .fold(0.0f32, f32::max);
+                let edges = smoothstep(0.8, 1.0, edge) * 0.3;
+                (0.04 + white + churn * 0.8 + edges).min(1.0)
             } else {
                 0.92 - 0.25 * smoothstep(0.8, 1.0, edge)
             };

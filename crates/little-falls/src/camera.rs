@@ -14,6 +14,7 @@ use bevy::pbr::{
     VolumetricFog,
 };
 use bevy::prelude::*;
+use bevy::render::view::{ColorGrading, ColorGradingGlobal, ColorGradingSection};
 
 #[derive(Component)]
 pub struct MainCamera;
@@ -32,6 +33,21 @@ pub fn spawn_camera(mut commands: Commands, config: Res<Config>) {
         }),
         Transform::from_translation(pos).looking_at(look, Vec3::Y),
         Tonemapping::TonyMcMapface,
+        // Gentle filmic grade: a little more contrast and color, slightly
+        // cool, to keep the forest from looking gray and flat.
+        ColorGrading::with_identical_sections(
+            ColorGradingGlobal {
+                exposure: 0.15,
+                temperature: -0.04,
+                post_saturation: 1.08,
+                ..default()
+            },
+            ColorGradingSection {
+                saturation: 1.04,
+                contrast: 1.08,
+                ..default()
+            },
+        ),
         Bloom::NATURAL,
         // SSAO needs MSAA off; SMAA handles edges instead.
         Msaa::Off,
@@ -41,7 +57,7 @@ pub fn spawn_camera(mut commands: Commands, config: Res<Config>) {
             color: Color::srgba(0.62, 0.72, 0.74, 1.0),
             directional_light_color: Color::srgba(1.0, 0.95, 0.8, 0.5),
             directional_light_exponent: 20.0,
-            falloff: FogFalloff::Exponential { density: 0.006 },
+            falloff: FogFalloff::Exponential { density: 0.004 },
         },
         MainCamera,
     ));
@@ -136,6 +152,34 @@ pub fn flythrough(t: f32) -> (Vec3, Vec3) {
     let pos = catmull(g(-1).0, g(0).0, g(1).0, g(2).0, u);
     let look = catmull(g(-1).1, g(0).1, g(1).1, g(2).1, u);
     (pos, look)
+}
+
+/// Points along the flythrough, for keeping scenery out of the camera's
+/// way. Cached: the path is fixed.
+pub fn path_samples() -> &'static [Vec3] {
+    static SAMPLES: std::sync::OnceLock<Vec<Vec3>> = std::sync::OnceLock::new();
+    SAMPLES.get_or_init(|| (0..=600).map(|i| flythrough(i as f32 / 600.0).0).collect())
+}
+
+/// True if an object's local bounds (`min`..`max`, placed by `tf`) stay at
+/// least `margin` meters from every point of the camera path.
+pub fn clear_of_path(tf: &Transform, min: Vec3, max: Vec3, margin: f32) -> bool {
+    let inv = tf.compute_affine().inverse();
+    let scale = tf.scale.max_element().max(1e-4);
+    let m = Vec3::splat(margin / scale);
+    let (lo, hi) = (min - m, max + m);
+    !path_samples().iter().any(|p| {
+        let l = inv.transform_point3(*p);
+        l.cmpge(lo).all() && l.cmple(hi).all()
+    })
+}
+
+/// Horizontal distance from (x, z) to the nearest point of the path.
+pub fn distance_to_path_xz(x: f32, z: f32) -> f32 {
+    path_samples()
+        .iter()
+        .map(|p| Vec2::new(p.x - x, p.z - z).length())
+        .fold(f32::MAX, f32::min)
 }
 
 /// Slow, endless drift along the flythrough path behind the menu and

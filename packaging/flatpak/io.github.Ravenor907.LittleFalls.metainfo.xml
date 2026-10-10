@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.Ravenor907.LittleFalls</id>
+  <name>Little Falls</name>
+  <summary>Graphics, CPU and memory benchmark</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <developer id="io.github.Ravenor907">
+    <name>Ravenor907</name>
+  </developer>
+  <description>
+    <p>
+      Little Falls benchmarks your graphics card, processor and memory with a
+      cinematic flythrough of a mossy forest waterfall: flowing water, spray
+      and mist, light shafts through the canopy, and wildlife.
+    </p>
+    <p>
+      Built for Linux gaming systems, from handhelds to desktops, with full
+      gamepad support. Results are saved for comparison and sharing.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.Ravenor907.LittleFalls.desktop</launchable>
+  <url type="homepage">https://github.com/Ravenor907/Little-Falls-Benchmark</url>
+  <url type="bugtracker">https://github.com/Ravenor907/Little-Falls-Benchmark/issues</url>
+  <categories>
+    <category>Game</category>
+    <category>System</category>
+  </categories>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>gamepad</control>
+  </supports>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.2.0" date="2026-10-10"/>
+  </releases>
+</component>

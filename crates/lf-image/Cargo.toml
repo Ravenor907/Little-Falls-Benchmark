@@ -1,0 +1,8 @@
+[package]
+name = "lf-image"
+description = "Image processing for Little Falls: mipmaps, half floats and image based lighting (no dependencies)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]

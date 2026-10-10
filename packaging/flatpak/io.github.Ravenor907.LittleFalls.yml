@@ -1,0 +1,29 @@
+# Flatpak manifest. The release workflow builds the binary first, stages it
+# (plus assets and metadata) in packaging/flatpak/staging, then runs
+# flatpak-builder on this file.
+app-id: io.github.Ravenor907.LittleFalls
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: little-falls
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  # GPU access for Vulkan.
+  - --device=dri
+  # Gamepads (handheld controls) live under /dev/input.
+  - --device=all
+  - --socket=pulseaudio
+modules:
+  - name: little-falls
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 little-falls /app/bin/little-falls
+      - if [ -d assets ]; then mkdir -p /app/share/little-falls && cp -r assets /app/share/little-falls/; fi
+      - install -Dm644 io.github.Ravenor907.LittleFalls.desktop /app/share/applications/io.github.Ravenor907.LittleFalls.desktop
+      - install -Dm644 io.github.Ravenor907.LittleFalls.metainfo.xml /app/share/metainfo/io.github.Ravenor907.LittleFalls.metainfo.xml
+      - install -Dm644 little-falls.svg /app/share/icons/hicolor/scalable/apps/io.github.Ravenor907.LittleFalls.svg
+    sources:
+      - type: dir
+        path: staging

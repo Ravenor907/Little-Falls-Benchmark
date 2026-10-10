@@ -1,19 +1,16 @@
 //! Turning raw measurements into points.
 //!
-//! Every measurement is compared with a reference value. Matching the
-//! reference earns 1000 points; twice as fast earns 2000. Category scores
+//! Every measurement is converted to points with a fixed calibration
+//! constant, linearly: twice as fast earns twice the points. Category scores
 //! are geometric means, so one outlier test cannot dominate, and the
 //! overall score is a weighted geometric mean of the categories.
 
 use crate::Measurement;
 
-/// Reference values. The reference machine is an Intel Core i9-14900K
-/// with DDR5-6000 and an AMD Radeon RX 9070 XT running the `high` preset
-/// at 2560x1440: it scores about 1000 in every category.
-///
-/// These are estimates until a real run on that hardware calibrates them.
-/// Changing them changes every score, so bump `SCORE_VERSION` when they
-/// change and the scoreboard keeps versions separate.
+/// Calibration constants: the measured value that earns 1000 points in
+/// each test. Points scale linearly from there. Changing these changes
+/// every score, so bump `SCORE_VERSION` whenever they change and the
+/// scoreboard keeps versions separate.
 pub const SCORE_VERSION: u32 = 1;
 
 fn reference(id: &str) -> Option<f64> {
@@ -137,6 +134,36 @@ pub fn frame_stats(frame_times_s: &[f64]) -> FrameStats {
     }
 }
 
+/// Common display refresh rates and frame limiter targets.
+const CAP_RATES: [f64; 19] = [
+    30.0, 40.0, 45.0, 48.0, 50.0, 60.0, 72.0, 75.0, 90.0, 100.0, 120.0, 144.0, 165.0, 170.0, 180.0, 200.0,
+    240.0, 280.0, 360.0,
+];
+
+/// Detects a run held to a fixed rate by vsync or a frame limiter. Such a
+/// run measures the display, not the GPU. The tell: the average sits on a
+/// standard rate *and* frame times barely vary, even though the scene's
+/// load changes a lot along the flythrough.
+pub fn detect_frame_cap(frame_times_s: &[f64]) -> Option<f64> {
+    if frame_times_s.len() < 120 {
+        return None;
+    }
+    let mut sorted = frame_times_s.to_vec();
+    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let n = sorted.len();
+    let median = sorted[n / 2];
+    let p10 = sorted[n / 10];
+    let p90 = sorted[n * 9 / 10];
+    let fps = 1.0 / median;
+    let rate = CAP_RATES
+        .iter()
+        .copied()
+        .min_by(|a, b| (a - fps).abs().partial_cmp(&(b - fps).abs()).unwrap())?;
+    let on_rate = (fps - rate).abs() / rate < 0.015;
+    let steady = p90 / p10 < 1.12;
+    (on_rate && steady).then_some(rate)
+}
+
 pub fn graphics_measurements(fs: &FrameStats) -> Vec<Measurement> {
     vec![
         Measurement {
@@ -146,6 +173,7 @@ pub fn graphics_measurements(fs: &FrameStats) -> Vec<Measurement> {
             unit: "fps",
             lower_is_better: false,
             check: fs.frames as u64,
+            spread: 0.0,
         },
         Measurement {
             id: "gfx.low1_fps",
@@ -154,6 +182,7 @@ pub fn graphics_measurements(fs: &FrameStats) -> Vec<Measurement> {
             unit: "fps",
             lower_is_better: false,
             check: fs.frames as u64,
+            spread: 0.0,
         },
     ]
 }
@@ -173,6 +202,20 @@ mod tests {
     }
 
     #[test]
+    fn detects_vsync_but_not_natural_variation() {
+        // Locked to 60 Hz with small jitter.
+        let locked: Vec<f64> = (0..600)
+            .map(|i| 1.0 / 60.0 + ((i % 7) as f64 - 3.0) * 0.00005)
+            .collect();
+        assert_eq!(detect_frame_cap(&locked), Some(60.0));
+        // Uncapped: averages near 60 but load varies along the path.
+        let free: Vec<f64> = (0..600)
+            .map(|i| 1.0 / (45.0 + 30.0 * ((i as f64) / 600.0)))
+            .collect();
+        assert_eq!(detect_frame_cap(&free), None);
+    }
+
+    #[test]
     fn reference_scores_1000() {
         let m = Measurement {
             id: "mem.latency",
@@ -181,6 +224,7 @@ mod tests {
             unit: "ns",
             lower_is_better: true,
             check: 0,
+            spread: 0.0,
         };
         assert!((points(&m) - 1000.0).abs() < 1e-9);
     }

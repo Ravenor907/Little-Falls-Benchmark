@@ -1,5 +1,8 @@
 name: Release
 
+# Builds the AppImage, tarball and Flatpak bundle. On a version tag (for
+# example v0.2.0, or v0.2.0-beta.1 for a pre-release) they are attached to
+# the GitHub release; run manually to just get build artifacts.
 on:
   push:
     tags: ["v*"]
@@ -9,9 +12,9 @@ permissions:
   contents: write
 
 jobs:
-  appimage:
-    name: Build AppImage
-    # Build on an older base so the binary runs on older glibc too.
+  build:
+    name: Build and package
+    # An older base keeps the binary compatible with older glibc.
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -25,22 +28,67 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
+      - uses: actions/cache@v4
+        with:
+          path: assets
+          key: assets-${{ hashFiles('tools/assets.json', 'tools/fetch_assets.py') }}
+      - name: Fetch assets
+        run: python3 tools/fetch_assets.py assets
+
       - name: Build
         run: cargo build --release -p little-falls
 
       - name: Package AppImage and tarball
-        run: packaging/appimage/build.sh target/release/little-falls dist
+        run: packaging/appimage/build.sh target/release/little-falls dist assets
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - name: Stage Flatpak inputs
+        run: |
+          S=packaging/flatpak/staging
+          mkdir -p $S
+          cp target/release/little-falls $S/
+          cp -r assets $S/assets
+          cp packaging/flatpak/io.github.Ravenor907.LittleFalls.desktop \
+             packaging/flatpak/io.github.Ravenor907.LittleFalls.metainfo.xml $S/
+          cp packaging/appimage/little-falls.svg $S/
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: little-falls-release
+          name: little-falls-packages
           path: dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-staging
+          path: packaging/flatpak/staging
 
       - name: Attach to GitHub release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
-          # Tags like v0.1.0-alpha.1 publish as pre-releases.
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+  flatpak:
+    name: Flatpak bundle
+    needs: build
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: flatpak-staging
+          path: packaging/flatpak/staging
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: LittleFalls.flatpak
+          manifest-path: packaging/flatpak/io.github.Ravenor907.LittleFalls.yml
+          cache-key: flatpak-builder-${{ github.sha }}
+      - name: Attach to GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: LittleFalls.flatpak
           prerelease: ${{ contains(github.ref_name, '-') }}

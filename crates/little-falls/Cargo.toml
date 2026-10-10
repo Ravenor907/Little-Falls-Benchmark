@@ -12,5 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 lf-core = { path = "../lf-core" }
+lf-image = { path = "../lf-image" }
 # Pinned to a minor version: Bevy's API changes between minor releases.
-bevy = { version = "0.16", features = ["wayland"] }
+# jpeg: the scanned assets ship as JPEG textures.
+bevy = { version = "0.16", features = ["wayland", "jpeg"] }

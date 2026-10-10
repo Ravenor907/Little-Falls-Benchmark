@@ -1,6 +1,7 @@
 //! Minimal overlay during the graphics test and explore mode: live FPS,
 //! a thin progress line and status, kept out of the way of the scene.
 
+use super::loading::{LoadingFill, LoadingOverlay};
 use super::theme::*;
 use crate::bench::{Bench, Phase};
 use crate::config::Config;
@@ -38,6 +39,8 @@ fn chip() -> impl Bundle {
 
 fn spawn_graphics_hud(mut commands: Commands, fonts: Res<Fonts>, config: Res<Config>) {
     let f = &*fonts;
+    // Covers the shader sweep; removed when the camera settles.
+    super::loading::spawn_overlay(&mut commands, f, "Preparing benchmark");
     commands
         .spawn((
             Node {
@@ -131,21 +134,28 @@ fn capitalize(s: &str) -> String {
 
 #[allow(clippy::type_complexity)]
 fn update(
+    mut commands: Commands,
     bench: Res<Bench>,
-    config: Res<Config>,
-    time: Res<Time<Real>>,
     long: Res<LongExposure>,
     mut texts: ParamSet<(Query<&mut Text, With<Fps>>, Query<&mut Text, With<Status>>)>,
-    mut fill: Query<&mut Node, With<ProgressFill>>,
+    mut fill: Query<&mut Node, (With<ProgressFill>, Without<LoadingFill>)>,
+    mut overlay_fill: Query<&mut Node, With<LoadingFill>>,
+    overlays: Query<Entity, With<LoadingOverlay>>,
 ) {
+    if bench.phase == Phase::Warmup {
+        for mut n in &mut overlay_fill {
+            n.width = Val::Percent(bench.sweep.progress() * 100.0);
+        }
+    } else {
+        for e in &overlays {
+            commands.entity(e).despawn();
+        }
+    }
     for mut t in &mut texts.p0() {
         t.0 = format!("{:.0} fps", bench.fps_smooth);
     }
     let status = match bench.phase {
-        Phase::Warmup => {
-            let left = (config.warmup - (time.elapsed_secs_f64() - bench.phase_start)).max(0.0);
-            format!("Warming up shaders   {:.0}", left.ceil())
-        }
+        Phase::Warmup | Phase::Settle => String::new(),
         Phase::Running if long.0 => "Long exposure".to_string(),
         Phase::Running => String::new(),
     };

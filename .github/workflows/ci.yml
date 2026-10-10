@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches-ignore: [ci-output]
+    branches-ignore: [ci-output, asset-survey, tools/asset-survey]
   pull_request:
   workflow_dispatch:
 
@@ -11,6 +11,11 @@ env:
 
 permissions:
   contents: write
+
+# A newer push to the same branch supersedes the running check.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -31,6 +36,14 @@ jobs:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
+
+      # Scanned CC0 art assets, cached between runs.
+      - uses: actions/cache@v4
+        with:
+          path: assets
+          key: assets-${{ hashFiles('tools/assets.json', 'tools/fetch_assets.py') }}
+      - name: Fetch assets
+        run: python3 tools/fetch_assets.py assets
 
       # Each stage logs to ci-out/ and records failure instead of stopping,
       # so the publish step below always runs with complete output.
@@ -69,9 +82,9 @@ jobs:
           WGPU_BACKEND: vulkan
           RUST_LOG: warn
         run: |
-          timeout 900 xvfb-run -a -s "-screen 0 1280x720x24" \
+          timeout 1800 xvfb-run -a -s "-screen 0 1280x720x24" \
             ./target/release/little-falls --run graphics --preset high \
-              --windowed 960x540 --warmup 45 --duration 90 --exit-on-finish --no-motion-blur \
+              --windowed 800x450 --sweep-frames 10 --duration 240 --exit-on-finish --no-motion-blur \
               --screenshots ci-out/screens --out ci-out/results \
             > ci-out/6-graphics.log 2>&1 || echo graphics >> ci-out/FAILED
 
@@ -80,8 +93,8 @@ jobs:
         env:
           WGPU_BACKEND: vulkan
         run: |
-          timeout 300 xvfb-run -a -s "-screen 0 1280x720x24" \
-            ./target/release/little-falls --windowed 1280x720 --menu-screenshot ci-out/screens/menu.png \
+          timeout 600 xvfb-run -a -s "-screen 0 1280x720x24" \
+            ./target/release/little-falls --windowed 1280x720 --sweep-frames 10 --menu-screenshot ci-out/screens/menu.png \
             > ci-out/7-menu.log 2>&1 || echo menu >> ci-out/FAILED
 
       # Publishes logs, screenshots and Cargo.lock to the ci-output branch.

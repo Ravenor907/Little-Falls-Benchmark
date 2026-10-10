@@ -216,7 +216,7 @@ pub fn run_all(size: Size, progress: Progress) -> Vec<Measurement> {
 
     for w in &list {
         progress(&format!("CPU single-thread: {}", w.name), step / total);
-        let (t, check) = best_of(3, || (w.run)(size));
+        let (t, check, spread) = best_of(5, || (w.run)(size));
         out.push(Measurement {
             id: leak(format!("cpu.single.{}", w.key)),
             name: leak(format!("{} (1 thread)", w.name)),
@@ -224,6 +224,7 @@ pub fn run_all(size: Size, progress: Progress) -> Vec<Measurement> {
             unit: w.unit,
             lower_is_better: false,
             check,
+            spread,
         });
         step += 1.0;
     }
@@ -231,7 +232,7 @@ pub fn run_all(size: Size, progress: Progress) -> Vec<Measurement> {
     for w in &list {
         progress(&format!("CPU multi-thread: {}", w.name), step / total);
         let run = w.run;
-        let (t, check) = best_of(2, || {
+        let (t, check, spread) = best_of(3, || {
             std::thread::scope(|sc| {
                 let handles: Vec<_> = (0..threads).map(|_| sc.spawn(move || run(size))).collect();
                 handles.into_iter().fold(0u64, |h, j| h ^ j.join().unwrap())
@@ -244,6 +245,7 @@ pub fn run_all(size: Size, progress: Progress) -> Vec<Measurement> {
             unit: w.unit,
             lower_is_better: false,
             check,
+            spread,
         });
         step += 1.0;
     }

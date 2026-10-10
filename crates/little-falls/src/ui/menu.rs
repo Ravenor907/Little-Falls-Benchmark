@@ -115,8 +115,9 @@ fn spawn(mut commands: Commands, fonts: Res<Fonts>, sys: Res<System>, config: Re
                         ..default()
                     })
                     .with_children(|r| {
-                        button(r, f, "Explore scene", 13, UiAction::Explore, false);
-                        button(r, f, "Quit", 14, UiAction::Quit, false);
+                        button(r, f, "History", 13, UiAction::History, false);
+                        button(r, f, "Explore", 14, UiAction::Explore, false);
+                        button(r, f, "Quit", 15, UiAction::Quit, false);
                     });
                 });
 
@@ -139,7 +140,7 @@ fn spawn(mut commands: Commands, fonts: Res<Fonts>, sys: Res<System>, config: Re
                         TEXT_DIM,
                     ));
                     ft.spawn(text(
-                        format!("v{}   ·   1000 points = i9-14900K + RX 9070 XT", crate::VERSION),
+                        format!("Version {}", crate::VERSION),
                         &f.regular,
                         12.0,
                         TEXT_FAINT,
@@ -166,28 +167,35 @@ fn update_preset_note(config: Res<Config>, mut q: Query<&mut Text, With<PresetNo
     }
 }
 
-/// `--menu-screenshot`: wait for shaders to settle, capture, quit.
+/// `--menu-screenshot`: let the menu settle, capture, quit.
 fn menu_screenshot(
     mut commands: Commands,
     config: Res<Config>,
     time: Res<Time<Real>>,
-    mut taken: Local<bool>,
+    mut shown_at: Local<Option<f32>>,
+    mut frames_since: Local<Option<u32>>,
     mut exit: EventWriter<AppExit>,
 ) {
     let Some(path) = &config.menu_screenshot else {
         return;
     };
-    let t = time.elapsed_secs();
-    if !*taken && t > 50.0 {
+    // Saving takes a few frames; quit only once those have rendered.
+    if let Some(n) = frames_since.as_mut() {
+        *n += 1;
+        if *n > 5 {
+            exit.write(AppExit::Success);
+        }
+        return;
+    }
+    let now = time.elapsed_secs();
+    let t = now - *shown_at.get_or_insert(now);
+    if t > 6.0 {
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
         }
         commands
             .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
             .observe(bevy::render::view::screenshot::save_to_disk(path.clone()));
-        *taken = true;
-    }
-    if t > 56.0 {
-        exit.write(AppExit::Success);
+        *frames_since = Some(0);
     }
 }

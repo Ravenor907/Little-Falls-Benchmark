@@ -3,6 +3,7 @@
 //! comfortable on a desktop and on a handheld in game mode.
 
 pub mod cpu_screen;
+pub mod history;
 pub mod hud;
 pub mod loading;
 pub mod menu;
@@ -20,6 +21,7 @@ pub enum UiAction {
     Run(RunPlan),
     RunAgain,
     Explore,
+    History,
     Menu,
     Quit,
 }
@@ -67,6 +69,7 @@ impl Plugin for UiPlugin {
                 hud::plugin,
                 results::plugin,
                 loading::plugin,
+                history::plugin,
             ));
     }
 }
@@ -280,6 +283,10 @@ fn handle_actions(
             UiAction::Explore => {
                 focus.order = None;
                 next.set(AppState::Explore);
+            }
+            UiAction::History => {
+                focus.order = None;
+                next.set(AppState::History);
             }
             UiAction::Menu => {
                 focus.order = None;

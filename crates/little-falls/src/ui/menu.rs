@@ -115,8 +115,9 @@ fn spawn(mut commands: Commands, fonts: Res<Fonts>, sys: Res<System>, config: Re
                         ..default()
                     })
                     .with_children(|r| {
-                        button(r, f, "Explore scene", 13, UiAction::Explore, false);
-                        button(r, f, "Quit", 14, UiAction::Quit, false);
+                        button(r, f, "History", 13, UiAction::History, false);
+                        button(r, f, "Explore", 14, UiAction::Explore, false);
+                        button(r, f, "Quit", 15, UiAction::Quit, false);
                     });
                 });
 

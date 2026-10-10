@@ -218,7 +218,31 @@ pub fn spawn(
         placed += 1;
     }
 
-    // Firs: a handful of shared variants, instanced up the ravine walls.
+    // Firs: the scanned fir sapling grown to full size when available.
+    let scanned_firs = lib.map(|l| l.pieces("fir_sapling").to_vec()).unwrap_or_default();
+    if !scanned_firs.is_empty() {
+        let mut placed = 0;
+        let mut tries = 0;
+        while placed < q.conifers && tries < q.conifers * 50 {
+            tries += 1;
+            let z = rng.range(creek::Z_MIN, creek::Z_MAX);
+            let x = rng.range(-creek::X_EXTENT + 2.0, creek::X_EXTENT - 2.0);
+            if (x - center(z)).abs() < 9.0 {
+                continue;
+            }
+            let piece = &scanned_firs[(rng.u64() % scanned_firs.len() as u64) as usize];
+            let s = rng.range(16.0, 30.0) / piece.size().y.max(0.1);
+            let tf = Transform::from_xyz(x, ground(x, z) - 0.3, z)
+                .with_rotation(Quat::from_rotation_y(rng.range(0.0, std::f32::consts::TAU)))
+                .with_scale(Vec3::splat(s));
+            for (mesh, mat) in &piece.prims {
+                commands.spawn((SceneObject, Mesh3d(mesh.clone()), MeshMaterial3d(mat.clone()), tf));
+            }
+            placed += 1;
+        }
+        return;
+    }
+    // Procedural firs: a handful of shared variants, instanced up the walls.
     let fir_variants: Vec<Handle<Mesh>> = (0..5).map(|_| meshes.add(fir(&mut rng).build())).collect();
     let mut placed = 0;
     let mut tries = 0;

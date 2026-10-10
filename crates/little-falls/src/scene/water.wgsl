@@ -84,8 +84,8 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
 
     // Ripples: two layers moving downstream at different rates.
     let s = water.flow_speed;
-    let g1 = ripple_grad(vec2<f32>(flow.x * 5.0, flow.y * 1.6 + t * s));
-    let g2 = ripple_grad(vec2<f32>(flow.x * 11.0 + 3.1, flow.y * 3.4 + t * s * 1.45));
+    let g1 = ripple_grad(vec2<f32>(flow.x * 3.0, flow.y * 1.2 + t * s));
+    let g2 = ripple_grad(vec2<f32>(flow.x * 7.0 + 3.1, flow.y * 2.6 + t * s * 1.45));
     let grad = (g1 * 0.6 + g2 * 0.4) * water.normal_strength * (1.0 - 0.75 * le);
 
     let n = normalize(pbr_input.N);
@@ -102,7 +102,7 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
         le,
     );
     let tex = textureSample(foam_tex, foam_sampler, foam_uv).a;
-    let crisp = smoothstep(0.35, 0.8, tex);
+    let crisp = smoothstep(0.45, 0.85, tex);
     let silky = smoothstep(0.05, 0.6, tex);
     let foam = clamp(foam_amount * mix(crisp, silky, le) * water.foam_strength, 0.0, 1.0);
 

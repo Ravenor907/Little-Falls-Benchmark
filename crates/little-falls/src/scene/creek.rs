@@ -172,9 +172,23 @@ pub fn water_ribbon(lift: f32, foam: bool) -> MeshData {
             // Water humps slightly in the middle and hugs the bed.
             let y = b + 0.12 + lift + 0.05 * (1.0 - edge * edge);
             let alpha = if foam {
+                // Whitewater on the drops and in the churn just below
+                // them; pools stay mostly clear, with a little foam
+                // along the banks.
                 let white = (s * 1.3).min(1.0);
-                let edges = smoothstep(0.75, 1.0, edge) * 0.5;
-                (0.4 + 0.6 * white + edges).min(1.0)
+                let churn = plunge_points()
+                    .iter()
+                    .map(|p| {
+                        let d = z - p.z;
+                        if (0.0..4.0).contains(&d) {
+                            1.0 - d / 4.0
+                        } else {
+                            0.0
+                        }
+                    })
+                    .fold(0.0f32, f32::max);
+                let edges = smoothstep(0.8, 1.0, edge) * 0.3;
+                (0.04 + white + churn * 0.8 + edges).min(1.0)
             } else {
                 0.92 - 0.25 * smoothstep(0.8, 1.0, edge)
             };

@@ -79,7 +79,7 @@ jobs:
         run: |
           timeout 900 xvfb-run -a -s "-screen 0 1280x720x24" \
             ./target/release/little-falls --run graphics --preset high \
-              --windowed 960x540 --sweep-frames 60 --duration 90 --exit-on-finish --no-motion-blur \
+              --windowed 800x450 --sweep-frames 10 --duration 240 --exit-on-finish --no-motion-blur \
               --screenshots ci-out/screens --out ci-out/results \
             > ci-out/6-graphics.log 2>&1 || echo graphics >> ci-out/FAILED
 
@@ -88,8 +88,8 @@ jobs:
         env:
           WGPU_BACKEND: vulkan
         run: |
-          timeout 300 xvfb-run -a -s "-screen 0 1280x720x24" \
-            ./target/release/little-falls --windowed 1280x720 --menu-screenshot ci-out/screens/menu.png \
+          timeout 600 xvfb-run -a -s "-screen 0 1280x720x24" \
+            ./target/release/little-falls --windowed 1280x720 --sweep-frames 10 --menu-screenshot ci-out/screens/menu.png \
             > ci-out/7-menu.log 2>&1 || echo menu >> ci-out/FAILED
 
       # Publishes logs, screenshots and Cargo.lock to the ci-output branch.

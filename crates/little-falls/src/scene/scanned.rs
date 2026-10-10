@@ -131,7 +131,7 @@ pub fn spawn(commands: &mut Commands, lib: &Library, materials: &mut Assets<Stan
                 z,
                 rng.range(0.0, TAU),
                 scale,
-                0.25,
+                0.4,
                 0.3,
                 wet,
                 true,
@@ -155,10 +155,10 @@ pub fn spawn(commands: &mut Commands, lib: &Library, materials: &mut Assets<Stan
         let z_lip = pp.z - 2.2;
         for side in [-1.0f32, 1.0] {
             if let Some(piece) = pick(&mut rng, &face) {
-                let s = rng.range(1.4, 1.9);
-                let x = center(z_lip) + side * (half_width(z_lip) + 0.5);
+                let s = rng.range(0.9, 1.2);
+                let x = center(z_lip) + side * (half_width(z_lip) + 1.3);
                 let yaw = side * FRAC_PI_2 + rng.range(-0.25, 0.25);
-                let tf = Transform::from_xyz(x, bed(z_lip) - 1.4, z_lip)
+                let tf = Transform::from_xyz(x, bed(z_lip) - 0.9, z_lip)
                     .with_rotation(Quat::from_rotation_y(yaw))
                     .with_scale(Vec3::splat(s));
                 p.spawn(commands, piece, tf, true, true);

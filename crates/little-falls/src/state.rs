@@ -19,6 +19,7 @@ pub enum AppState {
     Graphics,
     Results,
     Explore,
+    History,
 }
 
 /// Which parts of the benchmark the current run includes.

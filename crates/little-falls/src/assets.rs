@@ -268,7 +268,7 @@ pub fn progress(
                         diffuse: images.add(cube_image(&data.diffuse)),
                         specular: images.add(cube_image(&data.specular)),
                     });
-                    commands.insert_resource(SunFromSky(data.sun_dir));
+                    info!("environment ready; HDRI sun direction {:?}", data.sun_dir);
                 }
                 Err(e) => loading.failed.push(format!("environment: {e}")),
             }
@@ -279,10 +279,6 @@ pub fn progress(
     }
     (done as f32 / total as f32, done == total)
 }
-
-/// The HDRI's sun direction (pointing toward the sun).
-#[derive(Resource)]
-pub struct SunFromSky(pub Vec3);
 
 /// Builds the `Library` once all handles are loaded.
 pub fn finish(

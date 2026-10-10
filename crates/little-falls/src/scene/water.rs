@@ -53,7 +53,7 @@ pub fn spawn(
         base: StandardMaterial {
             // Tea-green creek water seen through a clear surface.
             base_color: Color::srgb(0.05, 0.09, 0.08),
-            perceptual_roughness: 0.035,
+            perceptual_roughness: 0.07,
             reflectance: 0.5,
             specular_transmission: 0.85,
             ior: 1.33,
@@ -67,9 +67,9 @@ pub fn spawn(
         extension: WaterExt {
             params: WaterParams {
                 long_exposure: 0.0,
-                normal_strength: 1.0,
+                normal_strength: 0.35,
                 flow_speed: 1.6,
-                foam_strength: 1.35,
+                foam_strength: 1.0,
             },
             foam: textures.streaks.clone(),
         },

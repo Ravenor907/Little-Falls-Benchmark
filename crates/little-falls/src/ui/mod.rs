@@ -3,6 +3,7 @@
 //! comfortable on a desktop and on a handheld in game mode.
 
 pub mod cpu_screen;
+pub mod fade;
 pub mod history;
 pub mod hud;
 pub mod loading;
@@ -70,6 +71,7 @@ impl Plugin for UiPlugin {
                 results::plugin,
                 loading::plugin,
                 history::plugin,
+                fade::plugin,
             ));
     }
 }

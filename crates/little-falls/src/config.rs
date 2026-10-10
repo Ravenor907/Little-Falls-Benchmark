@@ -47,6 +47,7 @@ impl Preset {
                 ssao: 0,
                 volumetric_steps: 0,
                 motion_blur: false,
+                texture_skip: 1,
             },
             Preset::Medium => Quality {
                 terrain_cell: 0.7,
@@ -63,6 +64,7 @@ impl Preset {
                 ssao: 1,
                 volumetric_steps: 32,
                 motion_blur: true,
+                texture_skip: 0,
             },
             Preset::High => Quality {
                 terrain_cell: 0.5,
@@ -79,6 +81,7 @@ impl Preset {
                 ssao: 2,
                 volumetric_steps: 64,
                 motion_blur: true,
+                texture_skip: 0,
             },
             Preset::Ultra => Quality {
                 terrain_cell: 0.35,
@@ -95,6 +98,7 @@ impl Preset {
                 ssao: 3,
                 volumetric_steps: 128,
                 motion_blur: true,
+                texture_skip: 0,
             },
         }
     }
@@ -119,6 +123,9 @@ pub struct Quality {
     /// 0 disables volumetric light shafts.
     pub volumetric_steps: u32,
     pub motion_blur: bool,
+    /// Top mip levels dropped from scanned textures (1 = half resolution),
+    /// to fit low video memory.
+    pub texture_skip: u32,
 }
 
 #[derive(Resource, Clone, Debug)]

@@ -4,6 +4,9 @@
 
 pub mod creek;
 pub mod flora;
+// encase's ShaderType derive emits layout-check functions that rustc sees
+// as unused; allow that for this module.
+#[allow(dead_code)]
 pub mod materials;
 pub mod props;
 pub mod scanned;

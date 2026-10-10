@@ -364,7 +364,11 @@ fn tune_material(id: &str, m: &mut StandardMaterial) {
 /// Gives every loaded 8-bit texture a full mipmap chain and anisotropic,
 /// repeating sampling. Scanned assets ship as plain JPEGs; without mips,
 /// distant surfaces shimmer and alias badly in motion.
-pub fn prepare_textures(mut events: EventReader<AssetEvent<Image>>, mut images: ResMut<Assets<Image>>) {
+pub fn prepare_textures(
+    mut events: EventReader<AssetEvent<Image>>,
+    mut images: ResMut<Assets<Image>>,
+    config: Res<crate::config::Config>,
+) {
     let ids: Vec<AssetId<Image>> = events
         .read()
         .filter_map(|e| match e {
@@ -392,8 +396,21 @@ pub fn prepare_textures(mut events: EventReader<AssetEvent<Image>>, mut images: 
         if data.len() != (w * h * 4) as usize {
             continue;
         }
-        let (chain, levels) = lf_image::mips::generate_rgba8(data, w, h, srgb);
+        let (mut chain, mut levels) = lf_image::mips::generate_rgba8(data, w, h, srgb);
+        let (mut w, mut h) = (w, h);
+        // Low presets drop the largest levels to save video memory.
+        for _ in 0..config.quality.texture_skip {
+            if w <= 256 || levels <= 1 {
+                break;
+            }
+            chain.drain(..(w * h * 4) as usize);
+            w = (w / 2).max(1);
+            h = (h / 2).max(1);
+            levels -= 1;
+        }
         img.data = Some(chain);
+        img.texture_descriptor.size.width = w;
+        img.texture_descriptor.size.height = h;
         img.texture_descriptor.mip_level_count = levels;
         img.sampler = ImageSampler::Descriptor(ImageSamplerDescriptor {
             address_mode_u: ImageAddressMode::Repeat,

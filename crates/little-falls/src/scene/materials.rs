@@ -15,8 +15,6 @@ pub type TerrainMaterial = ExtendedMaterial<StandardMaterial, TerrainExt>;
 pub type WaterMaterial = ExtendedMaterial<StandardMaterial, WaterExt>;
 pub type WindMaterial = ExtendedMaterial<StandardMaterial, WindExt>;
 
-// ShaderType generates layout checks that only matter on the GPU side.
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, ShaderType, Reflect)]
 pub struct TerrainParams {
     pub mud_scale: f32,
@@ -43,8 +41,6 @@ impl MaterialExtension for TerrainExt {
     }
 }
 
-// ShaderType generates layout checks that only matter on the GPU side.
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, ShaderType, Reflect)]
 pub struct WaterParams {
     pub long_exposure: f32,
@@ -68,8 +64,6 @@ impl MaterialExtension for WaterExt {
     }
 }
 
-// ShaderType generates layout checks that only matter on the GPU side.
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, ShaderType, Reflect)]
 pub struct WindParams {
     pub strength: f32,

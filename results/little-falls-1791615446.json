@@ -1,0 +1,61 @@
+{
+  "format_version": 1,
+  "score_version": 1,
+  "app_version": "0.1.0",
+  "timestamp": 1791615446,
+  "nickname": "",
+  "scores": {
+    "overall": 1.0000,
+    "graphics": 1.0000,
+    "cpu": 0.0000,
+    "memory": 0.0000
+  },
+  "system": {
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "cpu_threads": 4,
+    "ram_mib": 15988,
+    "gpu": "llvmpipe (LLVM 20.1.2, 256 bits)",
+    "gpu_driver": "llvmpipe Mesa 25.2.8-0ubuntu0.24.04.4 (LLVM 20.1.2)",
+    "gpu_backend": "Vulkan",
+    "os": "Ubuntu 24.04.5 LTS",
+    "os_id": "ubuntu",
+    "kernel": "6.17.0-1022-azure",
+    "gamescope": false
+  },
+  "graphics": {
+    "preset": "high",
+    "width": 800,
+    "height": 450,
+    "frames": 24,
+    "seconds": 252.1045,
+    "avg_fps": 0.0952,
+    "low1_fps": 0.0745,
+    "p50_ms": 10828.8743,
+    "p99_ms": 13413.9956
+  },
+  "warnings": [
+    "Shaders were still compiling when the test started.",
+    "Shaders compiled during 1 frames of the test; stutter may lower the score."
+  ],
+  "tests": [
+    {
+      "id": "gfx.avg_fps",
+      "name": "Average FPS",
+      "value": 0.0952,
+      "unit": "fps",
+      "points": 1.0000,
+      "check": "0000000000000018",
+      "spread": 0.0000
+    },
+    {
+      "id": "gfx.low1_fps",
+      "name": "1% low FPS",
+      "value": 0.0745,
+      "unit": "fps",
+      "points": 1.0000,
+      "check": "0000000000000018",
+      "spread": 0.0000
+    }
+  ],
+  "signature": "b1acc0dafb22f9d0c69eeb720debd60cd5e55d17ad54bd82bb7f6b37efcaaf41"
+}

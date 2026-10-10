@@ -1,0 +1,27 @@
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded zune-jpeg v0.5.15
+  Downloaded zune-core v0.5.3
+   Compiling zune-core v0.5.3
+   Compiling lf-image v0.1.0 (/home/runner/work/Little-Falls-Benchmark/Little-Falls-Benchmark/crates/lf-image)
+   Compiling lf-core v0.1.0 (/home/runner/work/Little-Falls-Benchmark/Little-Falls-Benchmark/crates/lf-core)
+   Compiling zune-jpeg v0.5.15
+   Compiling image v0.25.10
+   Compiling bevy_image v0.16.1
+   Compiling bevy_mesh v0.16.1
+   Compiling bevy_winit v0.16.1
+   Compiling bevy_render v0.16.1
+   Compiling bevy_core_pipeline v0.16.1
+   Compiling bevy_picking v0.16.1
+   Compiling bevy_scene v0.16.1
+   Compiling bevy_animation v0.16.1
+   Compiling bevy_sprite v0.16.1
+   Compiling bevy_pbr v0.16.1
+   Compiling bevy_text v0.16.1
+   Compiling bevy_ui v0.16.1
+   Compiling bevy_gizmos v0.16.1
+   Compiling bevy_gltf v0.16.1
+   Compiling bevy_internal v0.16.1
+   Compiling bevy v0.16.1
+   Compiling little-falls v0.1.0 (/home/runner/work/Little-Falls-Benchmark/Little-Falls-Benchmark/crates/little-falls)
+    Finished `release` profile [optimized] target(s) in 6m 23s

@@ -1,0 +1,23 @@
+    Checking zune-core v0.5.3
+    Checking lf-image v0.1.0 (/home/runner/work/Little-Falls-Benchmark/Little-Falls-Benchmark/crates/lf-image)
+    Checking lf-core v0.1.0 (/home/runner/work/Little-Falls-Benchmark/Little-Falls-Benchmark/crates/lf-core)
+    Checking zune-jpeg v0.5.15
+    Checking image v0.25.10
+    Checking bevy_image v0.16.1
+    Checking bevy_mesh v0.16.1
+    Checking bevy_winit v0.16.1
+    Checking bevy_render v0.16.1
+    Checking bevy_core_pipeline v0.16.1
+    Checking bevy_picking v0.16.1
+    Checking bevy_scene v0.16.1
+    Checking bevy_animation v0.16.1
+    Checking bevy_sprite v0.16.1
+    Checking bevy_pbr v0.16.1
+    Checking bevy_text v0.16.1
+    Checking bevy_ui v0.16.1
+    Checking bevy_gltf v0.16.1
+    Checking bevy_gizmos v0.16.1
+    Checking bevy_internal v0.16.1
+    Checking bevy v0.16.1
+    Checking little-falls v0.1.0 (/home/runner/work/Little-Falls-Benchmark/Little-Falls-Benchmark/crates/little-falls)
+    Finished `release` profile [optimized] target(s) in 31.75s

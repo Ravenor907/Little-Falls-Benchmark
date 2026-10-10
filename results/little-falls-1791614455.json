@@ -1,0 +1,138 @@
+{
+  "format_version": 1,
+  "score_version": 1,
+  "app_version": "0.1.0",
+  "timestamp": 1791614455,
+  "nickname": "",
+  "scores": {
+    "overall": 276.0000,
+    "graphics": 0.0000,
+    "cpu": 166.0000,
+    "memory": 590.0000
+  },
+  "system": {
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "cpu_threads": 4,
+    "ram_mib": 15988,
+    "gpu": "",
+    "gpu_driver": "",
+    "gpu_backend": "",
+    "os": "Ubuntu 24.04.5 LTS",
+    "os_id": "ubuntu",
+    "kernel": "6.17.0-1022-azure",
+    "gamescope": false
+  },
+  "graphics": null,
+  "warnings": [],
+  "tests": [
+    {
+      "id": "cpu.single.sieve",
+      "name": "Prime sieve (1 thread)",
+      "value": 315.7214,
+      "unit": "M numbers/s",
+      "points": 585.0000,
+      "check": "00428ca7f07645c5",
+      "spread": 0.0253
+    },
+    {
+      "id": "cpu.single.nbody",
+      "name": "N-body physics (1 thread)",
+      "value": 292.0187,
+      "unit": "M interactions/s",
+      "points": 471.0000,
+      "check": "a5ebce3ecaf1dc97",
+      "spread": 0.0336
+    },
+    {
+      "id": "cpu.single.matmul",
+      "name": "Matrix multiply (1 thread)",
+      "value": 14.2499,
+      "unit": "GFLOP/s",
+      "points": 396.0000,
+      "check": "f2becda60de07011",
+      "spread": 0.0528
+    },
+    {
+      "id": "cpu.single.hash",
+      "name": "SHA-256 hashing (1 thread)",
+      "value": 267.8303,
+      "unit": "MB/s",
+      "points": 496.0000,
+      "check": "4c9b6c0fbc8697b3",
+      "spread": 0.0247
+    },
+    {
+      "id": "cpu.multi.sieve",
+      "name": "Prime sieve (4 threads)",
+      "value": 689.4659,
+      "unit": "M numbers/s",
+      "points": 71.0000,
+      "check": "0000000000000000",
+      "spread": 0.0352
+    },
+    {
+      "id": "cpu.multi.nbody",
+      "name": "N-body physics (4 threads)",
+      "value": 551.3682,
+      "unit": "M interactions/s",
+      "points": 50.0000,
+      "check": "0000000000000000",
+      "spread": 0.1224
+    },
+    {
+      "id": "cpu.multi.matmul",
+      "name": "Matrix multiply (4 threads)",
+      "value": 30.3821,
+      "unit": "GFLOP/s",
+      "points": 52.0000,
+      "check": "0000000000000000",
+      "spread": 0.0693
+    },
+    {
+      "id": "cpu.multi.hash",
+      "name": "SHA-256 hashing (4 threads)",
+      "value": 563.8505,
+      "unit": "MB/s",
+      "points": 58.0000,
+      "check": "0000000000000000",
+      "spread": 0.0113
+    },
+    {
+      "id": "mem.read",
+      "name": "Memory read",
+      "value": 46.4442,
+      "unit": "GB/s",
+      "points": 546.0000,
+      "check": "000007ffffe00000",
+      "spread": 0.4226
+    },
+    {
+      "id": "mem.write",
+      "name": "Memory write",
+      "value": 38.2055,
+      "unit": "GB/s",
+      "points": 546.0000,
+      "check": "0000000000000005",
+      "spread": 2.2846
+    },
+    {
+      "id": "mem.copy",
+      "name": "Memory copy",
+      "value": 44.3347,
+      "unit": "GB/s",
+      "points": 493.0000,
+      "check": "00000000003fffff",
+      "spread": 0.0247
+    },
+    {
+      "id": "mem.latency",
+      "name": "Memory latency",
+      "value": 109.2094,
+      "unit": "ns",
+      "points": 824.0000,
+      "check": "00000000001df230",
+      "spread": 0.0780
+    }
+  ],
+  "signature": "6cf3f923a7518907b12e70012353a95fa0a8a0b6f5d6b59f41655bde531f730d"
+}

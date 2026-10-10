@@ -1,0 +1,22 @@
+Little Falls 0.1.0
+INTEL(R) XEON(R) PLATINUM 8573C | 4 threads | 15988 MiB | Ubuntu 24.04.5 LTS
+
+Running CPU and memory tests...
+[  0%] CPU single-thread: Prime sieve                  [ 12%] CPU single-thread: N-body physics               [ 25%] CPU single-thread: Matrix multiply              [ 38%] CPU single-thread: SHA-256 hashing              [ 50%] CPU multi-thread: Prime sieve                   [ 62%] CPU multi-thread: N-body physics                [ 75%] CPU multi-thread: Matrix multiply               [ 88%] CPU multi-thread: SHA-256 hashing               [100%] CPU tests done                                  [  0%] Memory bandwidth                                [ 60%] Memory latency                                  [100%] Memory tests done                               
+  Prime sieve (1 thread)               315.72 M numbers/s         585 pts
+  N-body physics (1 thread)            292.02 M interactions/s    471 pts
+  Matrix multiply (1 thread)            14.25 GFLOP/s             396 pts
+  SHA-256 hashing (1 thread)           267.83 MB/s                496 pts
+  Prime sieve (4 threads)              689.47 M numbers/s          71 pts
+  N-body physics (4 threads)           551.37 M interactions/s     50 pts
+  Matrix multiply (4 threads)           30.38 GFLOP/s              52 pts
+  SHA-256 hashing (4 threads)          563.85 MB/s                 58 pts
+  Memory read                           46.44 GB/s                546 pts
+  Memory write                          38.21 GB/s                546 pts
+  Memory copy                           44.33 GB/s                493 pts
+  Memory latency                       109.21 ns                  824 pts
+
+CPU:         166
+Memory:      590
+Overall:     276
+Results saved to ci-out/results/little-falls-1791614455.json

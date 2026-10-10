@@ -1,0 +1,56 @@
+   Compiling lf-core v0.1.0 (/home/runner/work/Little-Falls-Benchmark/Little-Falls-Benchmark/crates/lf-core)
+   Compiling lf-image v0.1.0 (/home/runner/work/Little-Falls-Benchmark/Little-Falls-Benchmark/crates/lf-image)
+   Compiling little-falls v0.1.0 (/home/runner/work/Little-Falls-Benchmark/Little-Falls-Benchmark/crates/little-falls)
+    Finished `release` profile [optimized] target(s) in 24.61s
+     Running unittests src/lib.rs (target/release/deps/lf_core-03fcb6ceb925e6cb)
+
+running 11 tests
+test cpu::tests::sieve_counts_primes ... ok
+test json::tests::parses_what_it_writes ... ok
+test json::tests::writes_json ... ok
+test results::tests::formats_dates ... ok
+test cpu::tests::workloads_are_deterministic ... ok
+test results::tests::history_roundtrip ... ok
+test score::tests::detects_vsync_but_not_natural_variation ... ok
+test score::tests::frame_stats_basic ... ok
+test sha256::tests::known_vectors ... ok
+test score::tests::reference_scores_1000 ... ok
+test memory::tests::quick_memory_runs ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.74s
+
+     Running unittests src/lib.rs (target/release/deps/lf_image-23fc356b64766d5d)
+
+running 9 tests
+test half::tests::known_values ... ok
+test half::tests::roundtrip_is_close ... ok
+test ibl::tests::decodes_flat_hdr ... ok
+test ibl::tests::finds_the_sun ... ok
+test ibl::tests::faces_point_the_right_way ... ok
+test mips::tests::chain_size_and_values ... ok
+test mips::tests::counts ... ok
+test mips::tests::srgb_average_is_gamma_correct ... ok
+test ibl::tests::uniform_environment_stays_uniform ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/release/deps/little_falls-e1c4c75fc38a5f6b)
+
+running 2 tests
+test scene::creek::tests::bed_flows_downhill ... ok
+test geom::tests::icosphere_counts ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests lf_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests lf_image
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

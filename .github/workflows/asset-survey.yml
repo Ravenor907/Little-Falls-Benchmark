@@ -16,7 +16,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: pip install pillow
-      - run: mkdir -p survey-out && (python3 tools/asset_catalog.py survey-out --shortlist 2>&1 | tee survey-out/log.txt) || true
+      - run: mkdir -p survey-out && (python3 tools/fetch_assets.py fetch-out 2>&1 | tee survey-out/fetch-log.txt) || true
+      - name: Describe fetched assets
+        run: |
+          cd fetch-out || exit 0
+          cp files.json CREDITS.txt ../survey-out/ 2>/dev/null || true
+          find . -type f -printf '%s %p\n' | sort -k2 > ../survey-out/sizes.txt
+          mkdir -p ../survey-out/gltf && for g in models/*/*.gltf; do cp "$g" ../survey-out/gltf/; done
       - name: Publish
         if: always()
         run: |

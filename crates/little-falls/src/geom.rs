@@ -206,11 +206,6 @@ pub fn cone(r: f32, h: f32, sides: u32) -> MeshData {
     for i in 0..sides {
         m.tri(apex, i + 2, i + 1);
     }
-    // Underside so cones read as solid foliage from below.
-    let center = m.vertex(Vec3::ZERO, -Vec3::Y, Vec2::splat(0.5), WHITE);
-    for i in 0..sides {
-        m.tri(center, i + 1, i + 2);
-    }
     m
 }
 

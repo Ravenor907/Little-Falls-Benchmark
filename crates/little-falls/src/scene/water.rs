@@ -47,7 +47,7 @@ pub fn spawn(
     q: &Quality,
 ) {
     let base = materials.add(StandardMaterial {
-        base_color: Color::srgba(0.05, 0.08, 0.07, 0.88),
+        base_color: Color::srgba(0.06, 0.10, 0.09, 0.72),
         alpha_mode: AlphaMode::Blend,
         perceptual_roughness: 0.06,
         reflectance: 0.6,
@@ -62,7 +62,7 @@ pub fn spawn(
         perceptual_roughness: 0.35,
         // A little self-illumination keeps whitewater bright in shade,
         // the way real foam scatters light.
-        emissive: LinearRgba::rgb(0.08, 0.09, 0.1),
+        emissive: LinearRgba::rgb(0.22, 0.24, 0.26),
         double_sided: true,
         cull_mode: None,
         ..default()

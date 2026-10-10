@@ -168,7 +168,7 @@ pub fn water_ribbon(lift: f32, foam: bool) -> MeshData {
             let alpha = if foam {
                 let white = (s * 1.3).min(1.0);
                 let edges = smoothstep(0.75, 1.0, edge) * 0.5;
-                (0.25 + 0.75 * white + edges).min(1.0)
+                (0.4 + 0.6 * white + edges).min(1.0)
             } else {
                 0.92 - 0.25 * smoothstep(0.8, 1.0, edge)
             };

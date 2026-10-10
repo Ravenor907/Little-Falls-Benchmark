@@ -107,7 +107,22 @@ fn fir(rng: &mut Rng) -> MeshData {
         let r = (1.0 - t).powf(0.9) * rng.range(3.2, 4.2) + 0.4;
         let ch = r * 1.5;
         let g = rng.range(-0.015, 0.015);
-        let cone = geom::cone(r, ch, 12).paint([0.035 + g, 0.085 + g, 0.04, 1.0]);
+        let sides = 14u32;
+        let mut cone = geom::cone(r, ch, sides).paint([0.05 + g, 0.11 + g, 0.05, 1.0]);
+        // Ragged, drooping branch tips instead of a clean geometric rim.
+        // Vertex 0 is the apex; 1..=sides+1 is the rim, whose first and
+        // last vertices coincide at the seam.
+        let jag: Vec<(f32, f32)> = (0..sides)
+            .map(|_| (rng.range(0.7, 1.25), rng.range(0.0, 0.45)))
+            .collect();
+        for k in 0..=sides {
+            let (scale, droop) = jag[(k % sides) as usize];
+            let p = &mut cone.pos[(k + 1) as usize];
+            p[0] *= scale;
+            p[2] *= scale;
+            p[1] -= droop * r * 0.5;
+        }
+        cone.recompute_normals();
         m.append(
             &cone,
             Mat4::from_rotation_translation(
@@ -148,6 +163,10 @@ pub fn spawn(
     let needles_mat = materials.add(StandardMaterial {
         base_color: Color::WHITE,
         perceptual_roughness: 0.95,
+        // Open-bottomed branch layers: render the inside too, so the tree
+        // reads as dense foliage from below.
+        double_sided: true,
+        cull_mode: None,
         ..default()
     });
 

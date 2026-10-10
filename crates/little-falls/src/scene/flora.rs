@@ -86,7 +86,7 @@ fn maple(rng: &mut Rng, root: Vec3, lean: Vec3, leaves: usize) -> (MeshData, Mes
             &mut foliage,
             pos,
             normal,
-            rng.range(0.0, 6.28),
+            rng.range(0.0, std::f32::consts::TAU),
             Vec2::splat(s),
             col,
         );
@@ -111,7 +111,7 @@ fn fir(rng: &mut Rng) -> MeshData {
         m.append(
             &cone,
             Mat4::from_rotation_translation(
-                Quat::from_rotation_y(rng.range(0.0, 6.28)),
+                Quat::from_rotation_y(rng.range(0.0, std::f32::consts::TAU)),
                 Vec3::Y * (y - ch * 0.3),
             ),
         );
@@ -198,7 +198,7 @@ pub fn spawn(
             Mesh3d(v),
             MeshMaterial3d(needles_mat.clone()),
             Transform::from_xyz(x, ground(x, z) - 0.5, z)
-                .with_rotation(Quat::from_rotation_y(rng.range(0.0, 6.28)))
+                .with_rotation(Quat::from_rotation_y(rng.range(0.0, std::f32::consts::TAU)))
                 .with_scale(Vec3::splat(s)),
         ));
         placed += 1;
@@ -237,7 +237,7 @@ fn spawn_undergrowth(
             let g = rng.f();
             let col = [0.30 + 0.15 * g, 0.55 + 0.15 * g, 0.12, 1.0];
             for k in 0..count {
-                let a = k as f32 / count as f32 * 6.28 + rng.range(-0.3, 0.3);
+                let a = k as f32 / count as f32 * std::f32::consts::TAU + rng.range(-0.3, 0.3);
                 let r = rng.range(0.1, 0.3);
                 let pos = base + Vec3::new(a.cos() * r, rng.range(0.1, 0.35), a.sin() * r);
                 let tilt = (n * 1.5 + Vec3::new(a.cos(), 0.0, a.sin()) * 0.6).normalize();
@@ -246,7 +246,7 @@ fn spawn_undergrowth(
                     &mut round[chunk],
                     pos,
                     tilt,
-                    rng.range(0.0, 6.28),
+                    rng.range(0.0, std::f32::consts::TAU),
                     Vec2::splat(s),
                     col,
                 );
@@ -256,7 +256,7 @@ fn spawn_undergrowth(
             // Sword fern: arching fronds radiating from a crown.
             let count = 7 + (rng.u64() % 6) as usize;
             for k in 0..count {
-                let a = k as f32 / count as f32 * 6.28 + rng.range(-0.2, 0.2);
+                let a = k as f32 / count as f32 * std::f32::consts::TAU + rng.range(-0.2, 0.2);
                 let out = Vec3::new(a.cos(), 0.0, a.sin());
                 let len = rng.range(0.6, 1.1);
                 let pos = base + out * len * 0.35 + Vec3::Y * len * 0.3;

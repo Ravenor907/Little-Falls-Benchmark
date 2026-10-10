@@ -135,7 +135,7 @@ pub fn spawn(
             Transform::from_translation(anchor).with_scale(Vec3::splat(rng.range(1.5, 3.5))),
             Mist {
                 anchor,
-                phase: rng.range(0.0, 6.28),
+                phase: rng.range(0.0, std::f32::consts::TAU),
             },
             NotShadowCaster,
         ));

@@ -70,7 +70,7 @@ fn mirrored(m: &MeshData) -> MeshData {
     for p in out.pos.iter_mut() {
         p[0] = -p[0];
     }
-    for t in out.idx.chunks_exact_mut(3) {
+    for t in out.idx.as_chunks_mut::<3>().0 {
         t.swap(1, 2);
     }
     out
@@ -106,7 +106,7 @@ pub fn spawn(
         let pos = FLOCK_CENTER
             + Vec3::new(rng.range(-1.0, 1.0), rng.range(-1.0, 1.0), rng.range(-1.0, 1.0)) * FLOCK_HALF;
         let vel = Vec3::new(rng.range(-1.0, 1.0), 0.0, rng.range(-1.0, 1.0)).normalize_or(Vec3::Z) * 5.0;
-        let phase = rng.range(0.0, 6.28);
+        let phase = rng.range(0.0, std::f32::consts::TAU);
         let rate = rng.range(11.0, 15.0);
         commands
             .spawn((
@@ -160,7 +160,7 @@ pub fn spawn(
         let x = creek::center(z) + rng.range(-6.0, 6.0);
         let pos = Vec3::new(x, ground(x, z) + rng.range(0.6, 2.5), z);
         let mat = fly_mats[i % fly_mats.len()].clone();
-        let phase = rng.range(0.0, 6.28);
+        let phase = rng.range(0.0, std::f32::consts::TAU);
         let rate = rng.range(8.0, 11.0);
         commands
             .spawn((

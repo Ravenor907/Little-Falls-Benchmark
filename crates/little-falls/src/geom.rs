@@ -60,7 +60,7 @@ impl MeshData {
     /// Area weighted smooth normals from the index buffer.
     pub fn recompute_normals(&mut self) {
         let mut acc = vec![Vec3::ZERO; self.pos.len()];
-        for t in self.idx.chunks_exact(3) {
+        for t in self.idx.as_chunks::<3>().0 {
             let (a, b, c) = (t[0] as usize, t[1] as usize, t[2] as usize);
             let pa = Vec3::from(self.pos[a]);
             let n = (Vec3::from(self.pos[b]) - pa).cross(Vec3::from(self.pos[c]) - pa);

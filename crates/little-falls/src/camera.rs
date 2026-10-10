@@ -72,7 +72,6 @@ fn apply_quality(cam: &mut EntityCommands, q: &Quality) {
         cam.insert(MotionBlur {
             shutter_angle: 0.5,
             samples: 4,
-            ..default()
         });
     }
 }

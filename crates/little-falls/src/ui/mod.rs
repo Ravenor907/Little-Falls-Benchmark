@@ -64,6 +64,7 @@ impl Plugin for UiPlugin {
                 )
                     .chain(),
             )
+            .add_systems(Update, fit_ui_to_window)
             .add_plugins((
                 menu::plugin,
                 cpu_screen::plugin,
@@ -73,6 +74,16 @@ impl Plugin for UiPlugin {
                 history::plugin,
                 fade::plugin,
             ));
+    }
+}
+
+/// Scales the whole interface with the window height, so panels fit on a
+/// 720p handheld and stay readable on a large monitor.
+fn fit_ui_to_window(windows: Query<&Window, With<bevy::window::PrimaryWindow>>, mut scale: ResMut<UiScale>) {
+    let Ok(w) = windows.single() else { return };
+    let s = (w.height() / 820.0).clamp(0.55, 1.25);
+    if (scale.0 - s).abs() > 0.01 {
+        scale.0 = s;
     }
 }
 

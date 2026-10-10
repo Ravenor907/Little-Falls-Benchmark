@@ -12,6 +12,11 @@ env:
 permissions:
   contents: write
 
+# A newer push to the same branch supersedes the running check.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build, test and render

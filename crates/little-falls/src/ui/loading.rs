@@ -31,6 +31,9 @@ pub struct LoadingDetail;
 enum Startup {
     /// Reading scanned models, textures and the HDRI from disk.
     Assets { since: f32 },
+    /// Asking for the scene build once the library resource exists
+    /// (resources inserted this frame are only visible next frame).
+    Request { procedural: bool },
     /// Waiting for the scene to be built from them.
     Building,
     /// Sweeping the camera so every shader compiles.
@@ -105,7 +108,11 @@ fn step(
     mut images: ResMut<Assets<Image>>,
     (gltfs, gltf_meshes, meshes): (Res<Assets<Gltf>>, Res<Assets<GltfMesh>>, Res<Assets<Mesh>>),
     (mut materials, mut wind_materials): (ResMut<Assets<StandardMaterial>>, ResMut<Assets<WindMaterial>>),
-    (mut rebuild, built): (EventWriter<RebuildScene>, Option<Res<SceneBuilt>>),
+    (mut rebuild, built, lib): (
+        EventWriter<RebuildScene>,
+        Option<Res<SceneBuilt>>,
+        Option<Res<assets::Library>>,
+    ),
     mut cam: Query<&mut Transform, With<MainCamera>>,
     mut long: ResMut<LongExposure>,
     mut fill: Query<&mut Node, With<LoadingFill>>,
@@ -132,18 +139,23 @@ fn step(
                             &mut wind_materials,
                         );
                         commands.insert_resource(lib);
-                        rebuild.write(RebuildScene);
-                        *startup = Startup::Building;
+                        *startup = Startup::Request { procedural: false };
                     }
                     (p * 0.5, format!("Loading the forest   {:.0}%", p * 100.0), false)
                 }
                 None => {
                     // No asset folder: procedural scene.
-                    rebuild.write(RebuildScene);
-                    *startup = Startup::Building;
+                    *startup = Startup::Request { procedural: true };
                     (0.5, "Building the forest".to_string(), false)
                 }
             }
+        }
+        Startup::Request { procedural } => {
+            if *procedural || lib.is_some() {
+                rebuild.write(RebuildScene);
+                *startup = Startup::Building;
+            }
+            (0.5, "Building the forest".to_string(), false)
         }
         Startup::Building => {
             if built.is_some() {

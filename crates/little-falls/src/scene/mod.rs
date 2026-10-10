@@ -21,7 +21,7 @@ use bevy::pbr::{
     VolumetricLight,
 };
 use bevy::prelude::*;
-use materials::{TerrainExt, TerrainMaterial, TerrainParams, WaterMaterial};
+use materials::{TerrainExt, TerrainMaterial, TerrainParams, WaterMaterial, WindMaterial};
 
 /// Marks every entity that belongs to the scene, so the scene can be
 /// hidden during CPU tests and rebuilt when the quality preset changes.
@@ -100,6 +100,7 @@ fn rebuild(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut terrain_materials: ResMut<Assets<TerrainMaterial>>,
     mut water_materials: ResMut<Assets<WaterMaterial>>,
+    mut wind_materials: ResMut<Assets<WindMaterial>>,
     mut images: ResMut<Assets<Image>>,
 ) {
     let requested = events.read().count() > 0;
@@ -118,6 +119,7 @@ fn rebuild(
         &mut materials,
         &mut terrain_materials,
         &mut water_materials,
+        &mut wind_materials,
         &mut images,
     );
     commands.insert_resource(SceneBuilt);
@@ -165,6 +167,7 @@ fn build(
     materials: &mut Assets<StandardMaterial>,
     terrain_materials: &mut Assets<TerrainMaterial>,
     water_materials: &mut Assets<WaterMaterial>,
+    wind_materials: &mut Assets<WindMaterial>,
     images: &mut Assets<Image>,
 ) {
     let q = config.quality;
@@ -187,6 +190,8 @@ fn build(
         let _ = mesh.generate_tangents();
         let mat = terrain_materials.add(ExtendedMaterial {
             base: StandardMaterial {
+                // A touch of green keeps sunlit moss from reading as dry dirt.
+                base_color: Color::srgb(0.86, 0.95, 0.8),
                 base_color_texture: Some(moss.albedo.clone()),
                 normal_map_texture: Some(moss.normal.clone()),
                 perceptual_roughness: 0.92,
@@ -229,7 +234,7 @@ fn build(
         Some(l) => scanned::spawn(commands, l, materials, &q),
         None => props::spawn(commands, meshes, materials, &textures, q.terrain_cell <= 0.5),
     }
-    flora::spawn(commands, meshes, materials, &textures, &q, lib);
+    flora::spawn(commands, meshes, materials, wind_materials, &textures, &q, lib);
     water::spawn(commands, meshes, materials, water_materials, &textures, &q);
     wildlife::spawn(commands, meshes, materials, &q);
 
@@ -238,8 +243,8 @@ fn build(
     let mut sun = commands.spawn((
         SceneObject,
         DirectionalLight {
-            color: Color::srgb(1.0, 0.95, 0.85),
-            illuminance: 15_000.0,
+            color: Color::srgb(1.0, 0.96, 0.9),
+            illuminance: 13_000.0,
             shadows_enabled: true,
             ..default()
         },
@@ -271,7 +276,7 @@ fn build(
             SceneObject,
             FogVolume {
                 fog_color: Color::srgb(0.95, 0.97, 1.0),
-                density_factor: 0.012,
+                density_factor: 0.008,
                 absorption: 0.25,
                 scattering: 0.35,
                 scattering_asymmetry: 0.75,

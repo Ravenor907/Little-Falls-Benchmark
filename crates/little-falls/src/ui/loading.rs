@@ -5,6 +5,7 @@ use super::theme::*;
 use crate::assets;
 use crate::camera::MainCamera;
 use crate::config::Config;
+use crate::scene::materials::WindMaterial;
 use crate::scene::water::LongExposure;
 use crate::scene::{RebuildScene, SceneBuilt};
 use crate::state::{after_loading, despawn_screen, AppState, Screen};
@@ -103,7 +104,7 @@ fn step(
     server: Res<AssetServer>,
     mut images: ResMut<Assets<Image>>,
     (gltfs, gltf_meshes, meshes): (Res<Assets<Gltf>>, Res<Assets<GltfMesh>>, Res<Assets<Mesh>>),
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    (mut materials, mut wind_materials): (ResMut<Assets<StandardMaterial>>, ResMut<Assets<WindMaterial>>),
     (mut rebuild, built): (EventWriter<RebuildScene>, Option<Res<SceneBuilt>>),
     mut cam: Query<&mut Transform, With<MainCamera>>,
     mut long: ResMut<LongExposure>,
@@ -122,7 +123,14 @@ fn step(
                         for f in &loading.failed {
                             warn!("asset problem: {f}");
                         }
-                        let lib = assets::finish(&loading, &gltfs, &gltf_meshes, &meshes, &mut materials);
+                        let lib = assets::finish(
+                            &loading,
+                            &gltfs,
+                            &gltf_meshes,
+                            &meshes,
+                            &mut materials,
+                            &mut wind_materials,
+                        );
                         commands.insert_resource(lib);
                         rebuild.write(RebuildScene);
                         *startup = Startup::Building;

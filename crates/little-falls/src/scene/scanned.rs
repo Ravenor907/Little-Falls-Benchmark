@@ -18,6 +18,7 @@ struct Placer<'a> {
     /// Darker, glossier copies of materials for surfaces near the water.
     wet: HashMap<AssetId<StandardMaterial>, Handle<StandardMaterial>>,
     count: usize,
+    skipped: usize,
 }
 
 impl Placer<'_> {
@@ -42,9 +43,23 @@ impl Placer<'_> {
     }
 
     fn spawn(&mut self, commands: &mut Commands, piece: &Piece, tf: Transform, wet: bool, shadows: bool) {
-        for (mesh, mat) in &piece.prims {
-            let mat = if wet { self.wet_variant(mat) } else { mat.clone() };
-            let mut e = commands.spawn((SceneObject, Mesh3d(mesh.clone()), MeshMaterial3d(mat), tf));
+        // Keep the camera's flight path clear so nothing fills the frame
+        // or clips through the lens.
+        if !crate::camera::clear_of_path(&tf, piece.min, piece.max, 0.8) {
+            self.skipped += 1;
+            return;
+        }
+        for (i, (mesh, mat)) in piece.prims.iter().enumerate() {
+            let mut e = match piece.wind.as_ref().and_then(|w| w.get(i)) {
+                // Foliage sways (never wet).
+                Some(w) if !wet => {
+                    commands.spawn((SceneObject, Mesh3d(mesh.clone()), MeshMaterial3d(w.clone()), tf))
+                }
+                _ => {
+                    let mat = if wet { self.wet_variant(mat) } else { mat.clone() };
+                    commands.spawn((SceneObject, Mesh3d(mesh.clone()), MeshMaterial3d(mat), tf))
+                }
+            };
             if !shadows {
                 e.insert(NotShadowCaster);
             }
@@ -99,6 +114,7 @@ pub fn spawn(commands: &mut Commands, lib: &Library, materials: &mut Assets<Stan
         materials,
         wet: HashMap::new(),
         count: 0,
+        skipped: 0,
     };
     let mut rng = Rng::new(2024);
     let rich = q.shadow_cascades > 2;
@@ -361,7 +377,10 @@ pub fn spawn(commands: &mut Commands, lib: &Library, materials: &mut Assets<Stan
         }
     }
 
-    info!("placed {} scanned objects", p.count);
+    info!(
+        "placed {} scanned objects ({} skipped near the camera path)",
+        p.count, p.skipped
+    );
 }
 
 /// A random point on either bank, `near`..`far` meters from the water,

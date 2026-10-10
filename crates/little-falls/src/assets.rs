@@ -6,6 +6,7 @@
 //! running `tools/fetch_assets.py`), the app falls back to the fully
 //! procedural scene, so it always runs.
 
+use crate::scene::materials::{windy, WindMaterial, WindParams};
 use bevy::asset::LoadState;
 use bevy::gltf::{Gltf, GltfMesh};
 use bevy::image::{
@@ -80,6 +81,8 @@ pub struct Surface {
 #[derive(Clone)]
 pub struct Piece {
     pub prims: Vec<(Handle<Mesh>, Handle<StandardMaterial>)>,
+    /// Swaying versions of the materials, for foliage (parallel to `prims`).
+    pub wind: Option<Vec<Handle<WindMaterial>>>,
     pub min: Vec3,
     pub max: Vec3,
 }
@@ -287,6 +290,7 @@ pub fn finish(
     gltf_meshes: &Assets<GltfMesh>,
     meshes: &Assets<Mesh>,
     materials: &mut Assets<StandardMaterial>,
+    wind_materials: &mut Assets<WindMaterial>,
 ) -> Library {
     let mut models = std::collections::HashMap::new();
     for (id, h) in &loading.gltfs {
@@ -313,8 +317,29 @@ pub fn finish(
                 }
                 prims.push((p.mesh.clone(), mat));
             }
-            if !prims.is_empty() && min.x <= max.x {
-                pieces.push(Piece { prims, min, max });
+            if min.x > max.x {
+                // Mesh data not kept on the CPU: assume a unit-sized piece.
+                warn!("{id}: no vertex data for bounds");
+                min = Vec3::new(-0.5, 0.0, -0.5);
+                max = Vec3::new(0.5, 1.0, 0.5);
+            }
+            let foliage = matches!(*id, "fern_02" | "celandine_01" | "fir_sapling");
+            let wind = foliage.then(|| {
+                prims
+                    .iter()
+                    .map(|(_, m)| {
+                        let base = materials.get(m).cloned().unwrap_or_default();
+                        wind_materials.add(windy(base, WindParams::PLANTS))
+                    })
+                    .collect()
+            });
+            if !prims.is_empty() {
+                pieces.push(Piece {
+                    prims,
+                    wind,
+                    min,
+                    max,
+                });
             }
         }
         models.insert(*id, pieces);

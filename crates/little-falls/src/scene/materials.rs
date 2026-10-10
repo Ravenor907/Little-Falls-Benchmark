@@ -9,9 +9,11 @@ use std::sync::OnceLock;
 
 static TERRAIN_SHADER: OnceLock<Handle<Shader>> = OnceLock::new();
 static WATER_SHADER: OnceLock<Handle<Shader>> = OnceLock::new();
+static WIND_SHADER: OnceLock<Handle<Shader>> = OnceLock::new();
 
 pub type TerrainMaterial = ExtendedMaterial<StandardMaterial, TerrainExt>;
 pub type WaterMaterial = ExtendedMaterial<StandardMaterial, WaterExt>;
+pub type WindMaterial = ExtendedMaterial<StandardMaterial, WindExt>;
 
 // ShaderType generates layout checks that only matter on the GPU side.
 #[allow(dead_code)]
@@ -66,6 +68,53 @@ impl MaterialExtension for WaterExt {
     }
 }
 
+// ShaderType generates layout checks that only matter on the GPU side.
+#[allow(dead_code)]
+#[derive(Clone, Copy, Debug, ShaderType, Reflect)]
+pub struct WindParams {
+    pub strength: f32,
+    pub base: f32,
+    pub height_scale: f32,
+    pub flutter: f32,
+}
+
+impl WindParams {
+    /// Leaves: everything flutters by the same small amount.
+    pub const LEAVES: Self = Self {
+        strength: 0.06,
+        base: 1.0,
+        height_scale: 0.0,
+        flutter: 5.3,
+    };
+    /// Ground plants: tips bend, the base stays rooted (local units).
+    pub const PLANTS: Self = Self {
+        strength: 0.18,
+        base: 0.0,
+        height_scale: 1.0,
+        flutter: 4.1,
+    };
+}
+
+#[derive(Asset, AsBindGroup, Reflect, Debug, Clone)]
+pub struct WindExt {
+    #[uniform(100)]
+    pub params: WindParams,
+}
+
+impl MaterialExtension for WindExt {
+    fn vertex_shader() -> ShaderRef {
+        ShaderRef::Handle(WIND_SHADER.get().expect("wind shader registered").clone())
+    }
+}
+
+/// Wraps a standard material so it sways in the wind.
+pub fn windy(base: StandardMaterial, params: WindParams) -> WindMaterial {
+    ExtendedMaterial {
+        base,
+        extension: WindExt { params },
+    }
+}
+
 pub struct MaterialsPlugin;
 
 impl Plugin for MaterialsPlugin {
@@ -79,11 +128,22 @@ impl Plugin for MaterialsPlugin {
             include_str!("water.wgsl"),
             "little_falls/water.wgsl",
         ));
+        let wind = shaders.add(Shader::from_wgsl(
+            include_str!("wind.wgsl"),
+            "little_falls/wind.wgsl",
+        ));
+        let _ = WIND_SHADER.set(wind);
         let _ = TERRAIN_SHADER.set(terrain);
         let _ = WATER_SHADER.set(water);
         app.add_plugins((
             MaterialPlugin::<TerrainMaterial>::default(),
             MaterialPlugin::<WaterMaterial>::default(),
+            // No depth prepass for swaying foliage: its moving vertices
+            // would disagree with a static prepass depth buffer.
+            MaterialPlugin::<WindMaterial> {
+                prepass_enabled: false,
+                ..default()
+            },
         ));
     }
 }

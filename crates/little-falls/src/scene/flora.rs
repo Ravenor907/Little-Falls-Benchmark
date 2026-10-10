@@ -3,6 +3,7 @@
 //! the water.
 
 use super::creek::{self, center, ground, ground_normal, half_width};
+use super::materials::{windy, WindMaterial, WindParams};
 use super::SceneObject;
 use crate::assets::Library;
 use crate::config::Quality;
@@ -135,10 +136,12 @@ fn fir(rng: &mut Rng) -> MeshData {
     m
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn spawn(
     commands: &mut Commands,
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<StandardMaterial>,
+    wind_materials: &mut Assets<WindMaterial>,
     textures: &Textures,
     q: &Quality,
     lib: Option<&Library>,
@@ -160,18 +163,21 @@ pub fn spawn(
         perceptual_roughness: 0.9,
         ..default()
     });
-    let maple_leaf_mat = materials.add(StandardMaterial {
-        base_color: Color::WHITE,
-        base_color_texture: Some(textures.maple_leaf.clone()),
-        alpha_mode: AlphaMode::Mask(0.5),
-        double_sided: true,
-        cull_mode: None,
-        perceptual_roughness: 0.6,
-        // Light passing through the leaves gives the bright backlit glow
-        // of maples in the reference photos.
-        diffuse_transmission: 0.55,
-        ..default()
-    });
+    let maple_leaf_mat = wind_materials.add(windy(
+        StandardMaterial {
+            base_color: Color::WHITE,
+            base_color_texture: Some(textures.maple_leaf.clone()),
+            alpha_mode: AlphaMode::Mask(0.5),
+            double_sided: true,
+            cull_mode: None,
+            perceptual_roughness: 0.6,
+            // Light passing through the leaves gives the bright backlit
+            // glow of maples in the reference photos.
+            diffuse_transmission: 0.55,
+            ..default()
+        },
+        WindParams::LEAVES,
+    ));
     let needles_mat = materials.add(StandardMaterial {
         base_color: Color::WHITE,
         perceptual_roughness: 0.95,
@@ -195,6 +201,13 @@ pub fn spawn(
             continue;
         }
         let lean = Vec3::new(-side, 0.0, rng.range(-0.3, 0.3)).normalize();
+        // Trunks lean over the creek; keep them out of the camera's path.
+        let reach = root + lean * 3.5;
+        if crate::camera::distance_to_path_xz(root.x, root.z) < 2.2
+            || crate::camera::distance_to_path_xz(reach.x, reach.z) < 2.2
+        {
+            continue;
+        }
         let (wood, foliage) = maple(&mut rng, root, lean, q.leaves_per_maple);
         commands.spawn((
             SceneObject,
@@ -227,7 +240,7 @@ pub fn spawn(
             tries += 1;
             let z = rng.range(creek::Z_MIN, creek::Z_MAX);
             let x = rng.range(-creek::X_EXTENT + 2.0, creek::X_EXTENT - 2.0);
-            if (x - center(z)).abs() < 9.0 {
+            if (x - center(z)).abs() < 9.0 || crate::camera::distance_to_path_xz(x, z) < 3.0 {
                 continue;
             }
             let piece = &scanned_firs[(rng.u64() % scanned_firs.len() as u64) as usize];

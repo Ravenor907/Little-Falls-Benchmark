@@ -60,10 +60,17 @@ impl Plugin for ScenePlugin {
                     apply_environment,
                     apply_visibility,
                     water::animate_water,
-                    water::animate_spray,
                     water::animate_mist,
                     water::toggle_long_exposure,
                     wildlife::flap_wings,
+                ),
+            )
+            // Simulations step at a fixed rate, so every machine computes
+            // the same flock and spray regardless of its frame rate.
+            .add_systems(
+                FixedUpdate,
+                (
+                    water::animate_spray,
                     wildlife::update_birds,
                     wildlife::update_butterflies,
                 ),

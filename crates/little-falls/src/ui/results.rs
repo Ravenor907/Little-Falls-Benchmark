@@ -1,5 +1,5 @@
-//! Results: overall score, a tile per category with a bar against the
-//! reference machine, and what to do next.
+//! Results: overall score, a tile per category with a score bar,
+//! and what to do next.
 
 use super::theme::*;
 use super::{button, UiAction};
@@ -120,13 +120,6 @@ fn spawn_ui(
                     tile(row, f, "Memory", s.memory, mem_detail);
                 });
 
-                p.spawn(text(
-                    "The tick on each bar marks 1000 points: Core i9-14900K with Radeon RX 9070 XT.",
-                    &f.regular,
-                    12.0,
-                    TEXT_FAINT,
-                ));
-
                 // System and run details.
                 p.spawn(card()).with_children(|c| {
                     spec_row(c, f, "GPU", &sys.0.gpu_name);
@@ -163,8 +156,7 @@ fn spawn_ui(
         });
 }
 
-/// A score tile. The bar spans 0 to 2000 points with a tick at 1000,
-/// the reference machine.
+/// A score tile with a bar that fills over 0 to 2000 points.
 fn tile(parent: &mut ChildSpawnerCommands, f: &Fonts, label: &str, score: f64, detail: Option<String>) {
     let ran = score > 0.0;
     parent
@@ -211,18 +203,6 @@ fn tile(parent: &mut ChildSpawnerCommands, f: &Fonts, label: &str, score: f64, d
                     },
                     BackgroundColor(ACCENT),
                     BorderRadius::all(Val::Px(2.0)),
-                ));
-                // Reference tick at 1000 points.
-                bar.spawn((
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::Percent(50.0),
-                        top: Val::Px(-3.0),
-                        width: Val::Px(2.0),
-                        height: Val::Px(10.0),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.5)),
                 ));
             });
             if let Some(d) = detail {

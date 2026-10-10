@@ -1,0 +1,27 @@
+name: Asset survey
+
+# Development helper: renders contact sheets of candidate CC0 assets and
+# publishes them to the asset-survey branch for review.
+on:
+  push:
+    branches: [tools/asset-survey]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  survey:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pillow
+      - run: mkdir -p survey-out && (python3 tools/asset_catalog.py survey-out 2>&1 | tee survey-out/log.txt) || true
+      - name: Publish
+        if: always()
+        run: |
+          mkdir -p survey-out && cd survey-out
+          git init -q -b asset-survey
+          git config user.name ci && git config user.email ci@users.noreply.github.com
+          git add -A && git commit -q -m "Asset survey"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" asset-survey

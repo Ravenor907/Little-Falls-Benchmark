@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches-ignore: [ci-output]
+    branches-ignore: [ci-output, asset-survey, tools/asset-survey]
   pull_request:
   workflow_dispatch:
 

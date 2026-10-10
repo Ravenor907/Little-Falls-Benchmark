@@ -98,7 +98,7 @@ pub fn root(justify: JustifyContent, align: AlignItems) -> Node {
     }
 }
 
-/// A key/value row such as "GPU   AMD Radeon RX 9070 XT".
+/// A key/value row such as "GPU   <adapter name>".
 pub fn spec_row(parent: &mut ChildSpawnerCommands, fonts: &Fonts, key: &str, value: &str) {
     parent
         .spawn(Node {

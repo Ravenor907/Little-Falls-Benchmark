@@ -139,7 +139,7 @@ fn spawn(mut commands: Commands, fonts: Res<Fonts>, sys: Res<System>, config: Re
                         TEXT_DIM,
                     ));
                     ft.spawn(text(
-                        format!("v{}   ·   1000 points = i9-14900K + RX 9070 XT", crate::VERSION),
+                        format!("Version {}", crate::VERSION),
                         &f.regular,
                         12.0,
                         TEXT_FAINT,

@@ -13,8 +13,8 @@ Built in Rust on [Bevy](https://bevyengine.org) and Vulkan. Every model and
 texture is generated in code, so the repository holds no art assets and
 every machine renders exactly the same scene.
 
-> **Status:** early development. Scores are provisional until the
-> reference machine is calibrated (see [Scoring](#scoring)).
+> **Status:** early development. Scores may change between versions
+> while the tests are tuned; results record the scoring version.
 
 ## Supported systems
 
@@ -79,19 +79,13 @@ starts.
 
 ## Scoring
 
-Each test is compared with a reference machine: **Intel Core i9-14900K,
-DDR5-6000, AMD Radeon RX 9070 XT, `high` preset at 2560x1440.** That
-system scores about **1000** in every category. A system twice as fast
-scores 2000; half as fast, 500.
-
-Category scores are geometric means of their tests, and the overall score
-is a weighted geometric mean: graphics 50%, CPU 30%, memory 20%.
+Higher is better. Each test converts its measurement to points linearly,
+so a system twice as fast scores twice as many points. Category scores
+are geometric means of their tests, and the overall score is a weighted
+geometric mean: graphics 50%, CPU 30%, memory 20%.
 
 Graphics scores are only comparable at the same preset and resolution.
 The scoreboard groups them accordingly.
-
-The current reference values are estimates. Once the benchmark has run on
-the reference hardware they will be locked in and `score_version` bumped.
 
 ## Scoreboard
 

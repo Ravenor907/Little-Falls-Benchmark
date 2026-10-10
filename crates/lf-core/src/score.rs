@@ -1,19 +1,16 @@
 //! Turning raw measurements into points.
 //!
-//! Every measurement is compared with a reference value. Matching the
-//! reference earns 1000 points; twice as fast earns 2000. Category scores
+//! Every measurement is converted to points with a fixed calibration
+//! constant, linearly: twice as fast earns twice the points. Category scores
 //! are geometric means, so one outlier test cannot dominate, and the
 //! overall score is a weighted geometric mean of the categories.
 
 use crate::Measurement;
 
-/// Reference values. The reference machine is an Intel Core i9-14900K
-/// with DDR5-6000 and an AMD Radeon RX 9070 XT running the `high` preset
-/// at 2560x1440: it scores about 1000 in every category.
-///
-/// These are estimates until a real run on that hardware calibrates them.
-/// Changing them changes every score, so bump `SCORE_VERSION` when they
-/// change and the scoreboard keeps versions separate.
+/// Calibration constants: the measured value that earns 1000 points in
+/// each test. Points scale linearly from there. Changing these changes
+/// every score, so bump `SCORE_VERSION` whenever they change and the
+/// scoreboard keeps versions separate.
 pub const SCORE_VERSION: u32 = 1;
 
 fn reference(id: &str) -> Option<f64> {

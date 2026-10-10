@@ -166,19 +166,19 @@ fn update_preset_note(config: Res<Config>, mut q: Query<&mut Text, With<PresetNo
     }
 }
 
-/// `--menu-screenshot`: wait for shaders to settle, capture, quit.
+/// `--menu-screenshot`: let the menu settle, capture, quit.
 fn menu_screenshot(
     mut commands: Commands,
     config: Res<Config>,
     time: Res<Time<Real>>,
+    mut shown_at: Local<Option<f32>>,
     mut taken: Local<bool>,
     mut exit: EventWriter<AppExit>,
 ) {
-    let Some(path) = &config.menu_screenshot else {
-        return;
-    };
-    let t = time.elapsed_secs();
-    if !*taken && t > 50.0 {
+    let Some(path) = &config.menu_screenshot else { return };
+    let now = time.elapsed_secs();
+    let t = now - *shown_at.get_or_insert(now);
+    if !*taken && t > 6.0 {
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
         }
@@ -187,7 +187,7 @@ fn menu_screenshot(
             .observe(bevy::render::view::screenshot::save_to_disk(path.clone()));
         *taken = true;
     }
-    if t > 56.0 {
+    if t > 10.0 {
         exit.write(AppExit::Success);
     }
 }

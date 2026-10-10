@@ -35,6 +35,7 @@ fn measurement_json(m: &Measurement) -> Json {
         .with("unit", m.unit)
         .with("points", score::points(m).round())
         .with("check", format!("{:016x}", m.check))
+        .with("spread", m.spread)
 }
 
 pub fn build(
@@ -42,6 +43,7 @@ pub fn build(
     sys: &SystemInfo,
     measurements: &[Measurement],
     frames: Option<&FrameStats>,
+    warnings: &[String],
 ) -> Report {
     let scores = score::compute(measurements);
     let system = Json::obj()
@@ -86,6 +88,10 @@ pub fn build(
         )
         .with("system", system)
         .with("graphics", graphics)
+        .with(
+            "warnings",
+            warnings.iter().map(|w| Json::Str(w.clone())).collect::<Vec<_>>(),
+        )
         .with(
             "tests",
             measurements.iter().map(measurement_json).collect::<Vec<_>>(),

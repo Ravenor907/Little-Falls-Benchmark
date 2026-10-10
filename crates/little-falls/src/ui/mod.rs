@@ -4,6 +4,7 @@
 
 pub mod cpu_screen;
 pub mod hud;
+pub mod loading;
 pub mod menu;
 pub mod results;
 pub mod theme;
@@ -60,7 +61,13 @@ impl Plugin for UiPlugin {
                 )
                     .chain(),
             )
-            .add_plugins((menu::plugin, cpu_screen::plugin, hud::plugin, results::plugin));
+            .add_plugins((
+                menu::plugin,
+                cpu_screen::plugin,
+                hud::plugin,
+                results::plugin,
+                loading::plugin,
+            ));
     }
 }
 

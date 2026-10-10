@@ -22,6 +22,7 @@ mod scene;
 mod state;
 mod textures;
 mod ui;
+mod warmup;
 
 use bevy::prelude::*;
 use bevy::window::{MonitorSelection, PresentMode, WindowMode, WindowResolution};
@@ -50,6 +51,7 @@ pub fn save_report(
     ms: &[Measurement],
     frames: Option<&FrameStats>,
     resolution: (u32, u32),
+    warnings: &[String],
 ) -> (results::Report, String) {
     let now = unix_time();
     let run = RunInfo {
@@ -63,7 +65,7 @@ pub fn save_report(
         unix_time: now,
         nickname: config.nickname.clone(),
     };
-    let report = results::build(&run, sys, ms, frames);
+    let report = results::build(&run, sys, ms, frames, warnings);
     let dir = config.out_dir.clone().unwrap_or_else(results::default_dir);
     let line = match results::save(&report, &dir, now) {
         Ok(p) => format!("Results saved to {}", p.display()),
@@ -93,7 +95,50 @@ fn run_cpu_tests(quick: bool) -> Vec<Measurement> {
     ms
 }
 
+/// On a crash: keep the normal stderr output, save a crash log, and show
+/// a desktop dialog when possible, since an app launched from a menu or
+/// Steam has no visible terminal.
+fn install_crash_handler() {
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        default_hook(info);
+        let msg = info.to_string();
+        let dir = results::default_dir().parent().map(|p| p.to_path_buf()).unwrap_or_default();
+        let log = dir.join("crash.log");
+        let _ = std::fs::create_dir_all(&dir);
+        let _ = std::fs::write(
+            &log,
+            format!(
+                "Little Falls {VERSION} crashed\n\n{msg}\n\n{}\n",
+                std::backtrace::Backtrace::force_capture()
+            ),
+        );
+        let lower = msg.to_lowercase();
+        let hint = if lower.contains("gpu") || lower.contains("adapter") || lower.contains("vulkan") {
+            "\n\nNo usable Vulkan GPU driver was found. Install your distribution's Vulkan \
+             driver (for AMD and Intel: mesa-vulkan-drivers) and try again."
+        } else {
+            ""
+        };
+        let text = format!(
+            "Little Falls ran into a problem and had to close.{hint}\n\nDetails were saved to {}",
+            log.display()
+        );
+        let shown = std::process::Command::new("kdialog")
+            .args(["--title", "Little Falls", "--error", &text])
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false);
+        if !shown {
+            let _ = std::process::Command::new("zenity")
+                .args(["--error", "--title=Little Falls", "--no-wrap", &format!("--text={text}")])
+                .status();
+        }
+    }));
+}
+
 fn main() {
+    install_crash_handler();
     let config = match Config::from_args() {
         Ok(c) => c,
         Err(e) => {
@@ -116,7 +161,7 @@ fn main() {
     if config.headless_cpu {
         println!("\nRunning CPU and memory tests...");
         let cpu_results = run_cpu_tests(config.quick);
-        let (report, line) = save_report(&config, &sys, &cpu_results, None, (0, 0));
+        let (report, line) = save_report(&config, &sys, &cpu_results, None, (0, 0), &[]);
         println!("\nCPU:      {:>6.0}", report.scores.cpu);
         println!("Memory:   {:>6.0}", report.scores.memory);
         println!("Overall:  {:>6.0}", report.scores.overall);
@@ -148,9 +193,9 @@ fn main() {
         .insert_resource(config)
         .insert_resource(state::System(sys))
         .insert_resource(state::RunData::default())
-        .add_plugins((scene::ScenePlugin, ui::UiPlugin, bench::plugin))
+        .add_plugins((scene::ScenePlugin, ui::UiPlugin, bench::plugin, warmup::WarmupPlugin))
         .add_systems(PreStartup, state::detect_gpu)
-        .add_systems(Startup, (camera::spawn_camera, state::auto_start))
+        .add_systems(Startup, (camera::spawn_camera, state::enter_loading))
         .add_systems(
             Update,
             (

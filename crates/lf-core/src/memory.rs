@@ -45,7 +45,7 @@ pub fn bandwidth(quick: bool) -> Vec<Measurement> {
     let mut dst: Vec<u64> = vec![0; words];
     let gb = bytes as f64 / 1e9;
 
-    let (t_read, c_read) = best_of(5, || {
+    let (t_read, c_read, s_read) = best_of(5, || {
         std::thread::scope(|sc| {
             let hs: Vec<_> = split(&src, threads)
                 .into_iter()
@@ -57,7 +57,7 @@ pub fn bandwidth(quick: bool) -> Vec<Measurement> {
     });
 
     let mut pass = 0u64;
-    let (t_write, c_write) = best_of(5, || {
+    let (t_write, c_write, s_write) = best_of(5, || {
         pass += 1;
         let v = pass;
         std::thread::scope(|sc| {
@@ -68,7 +68,7 @@ pub fn bandwidth(quick: bool) -> Vec<Measurement> {
         dst[words / 2]
     });
 
-    let (t_copy, c_copy) = best_of(5, || {
+    let (t_copy, c_copy, s_copy) = best_of(5, || {
         std::thread::scope(|sc| {
             for (d, s) in split_mut(&mut dst, threads).into_iter().zip(split(&src, threads)) {
                 sc.spawn(move || d.copy_from_slice(s));
@@ -87,6 +87,7 @@ pub fn bandwidth(quick: bool) -> Vec<Measurement> {
             unit: "GB/s",
             lower_is_better: false,
             check: c_read,
+            spread: s_read,
         },
         Measurement {
             id: "mem.write",
@@ -95,6 +96,7 @@ pub fn bandwidth(quick: bool) -> Vec<Measurement> {
             unit: "GB/s",
             lower_is_better: false,
             check: c_write,
+            spread: s_write,
         },
         Measurement {
             id: "mem.copy",
@@ -103,6 +105,7 @@ pub fn bandwidth(quick: bool) -> Vec<Measurement> {
             unit: "GB/s",
             lower_is_better: false,
             check: c_copy,
+            spread: s_copy,
         },
     ]
 }
@@ -128,7 +131,7 @@ pub fn latency(quick: bool) -> Measurement {
     drop(order);
 
     let hops = if quick { 2_000_000 } else { 20_000_000 };
-    let (t, check) = best_of(3, || {
+    let (t, check, spread) = best_of(3, || {
         let mut p = 0usize;
         for _ in 0..hops {
             p = next[p];
@@ -142,6 +145,7 @@ pub fn latency(quick: bool) -> Measurement {
         unit: "ns",
         lower_is_better: true,
         check,
+        spread,
     }
 }
 

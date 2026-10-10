@@ -55,9 +55,37 @@ def sheet(items, kind, out, page):
     img.save(out / f"{kind}-{page:02d}.jpg", quality=82)
 
 
+SHORTLIST = {
+    "textures": ["mossy_rock", "rock_pitted_mossy", "lichen_rock", "rock_face_03", "dark_rock", "dark_rock_02",
+                 "rock_surface", "river_small_rocks", "ganges_river_pebbles", "forest_leaves_02", "forest_leaves_04",
+                 "forrest_ground_01", "forest_ground_04", "brown_mud_leaves_01", "leaves_forest_ground", "forest_floor",
+                 "mud_forest", "dry_decay_leaves", "roots", "bark_brown_02", "pine_bark", "tree_bark_03",
+                 "trident_maple_bark", "knotted_pine_bark", "moss_wood", "rock_wall_02", "rocks_ground_02",
+                 "forest_ground_06", "dirt_floor", "rocky_trail"],
+    "models": ["rock_moss_set_01", "rock_moss_set_02", "boulder_01", "rock_07", "rock_09", "stone_01",
+               "rock_face_01", "rock_face_02", "fern_02", "moss_01", "tree_stump_01", "tree_stump_02",
+               "dead_tree_trunk", "dead_tree_trunk_02", "pine_roots", "root_cluster_01", "root_cluster_02",
+               "dry_branches_medium_01", "shrub_01", "shrub_02", "shrub_03", "shrub_04", "nettle_plant",
+               "weed_plant_02", "periwinkle_plant", "celandine_01", "fir_sapling", "mountainside",
+               "single_root", "bark_debris_01"],
+    "hdris": ["mossy_forest", "forest_slope", "lauter_waterfall", "misty_pines", "rainforest_trail",
+              "phalzer_forest_01", "crystal_falls", "stream", "whipple_creek_regional_park_04",
+              "whipple_creek_regional_park_01", "woods", "forest_cave", "river_rocks", "river_alcove",
+              "monbachtal_riverbank", "autumn_forest_01", "nature_reserve_forest", "forest_grove"],
+}
+
+
+def shortlist(out):
+    for kind, ids in SHORTLIST.items():
+        sheet([(i, None) for i in ids], f"short-{kind}", out, 1)
+
+
 def main():
     out = Path(sys.argv[1])
     out.mkdir(parents=True, exist_ok=True)
+    if len(sys.argv) > 2 and sys.argv[2] == "--shortlist":
+        shortlist(out)
+        return
     summary = {}
     for kind, words in KEYWORDS.items():
         assets = json.loads(get(f"{API}/assets?t={kind}"))

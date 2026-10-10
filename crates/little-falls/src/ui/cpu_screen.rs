@@ -189,6 +189,16 @@ fn poll(
         t.0 = format!("{:.0}%", s.fraction * 100.0);
     }
     if let Some(results) = s.results.take() {
+        // More than 15% between repeats means something else was using
+        // the CPU, or it throttled.
+        let worst = results.iter().map(|m| m.spread).fold(0.0, f64::max);
+        if worst > 0.15 {
+            data.warnings.push(format!(
+                "CPU results varied by up to {:.0}% between repeats. Close other apps \
+                 and make sure the system is not throttling for a steadier score.",
+                worst * 100.0
+            ));
+        }
         data.cpu = results;
         let graphics = plan.map(|p| p.graphics).unwrap_or(false);
         next.set(if graphics {

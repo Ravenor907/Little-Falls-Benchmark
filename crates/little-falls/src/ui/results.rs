@@ -27,7 +27,8 @@ fn enter(
     if let Some(f) = &data.frames {
         ms.extend(score::graphics_measurements(f));
     }
-    let (report, saved) = crate::save_report(&config, &sys.0, &ms, data.frames.as_ref(), data.resolution);
+    let (report, saved) =
+        crate::save_report(&config, &sys.0, &ms, data.frames.as_ref(), data.resolution, &data.warnings);
     print_summary(&report.scores, data.frames.as_ref(), &saved);
     if config.exit_on_finish && config.screenshot_dir.is_none() {
         exit.write(AppExit::Success);
@@ -119,6 +120,27 @@ fn spawn_ui(
                     tile(row, f, "CPU", s.cpu, cpu_detail);
                     tile(row, f, "Memory", s.memory, mem_detail);
                 });
+
+                // Anything that makes this result less trustworthy.
+                if !data.warnings.is_empty() {
+                    p.spawn((
+                        Node {
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(6.0),
+                            padding: UiRect::axes(Val::Px(16.0), Val::Px(12.0)),
+                            border: UiRect::left(Val::Px(3.0)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.95, 0.70, 0.25, 0.08)),
+                        BorderColor(WARN),
+                        BorderRadius::all(Val::Px(RADIUS_SMALL)),
+                    ))
+                    .with_children(|w| {
+                        for msg in &data.warnings {
+                            w.spawn(text(msg.clone(), &f.regular, 13.0, Color::srgb(0.98, 0.85, 0.6)));
+                        }
+                    });
+                }
 
                 // System and run details.
                 p.spawn(card()).with_children(|c| {

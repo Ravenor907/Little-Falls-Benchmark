@@ -140,6 +140,9 @@ pub struct Config {
     pub out_dir: Option<std::path::PathBuf>,
     /// Seconds to hold still before timing (shader warm-up).
     pub warmup: f64,
+    /// Frames spent sweeping the camera along the path so every shader
+    /// variant compiles before anything is timed.
+    pub sweep_frames: u32,
     /// Save screenshots at fixed points of the flythrough (for CI and
     /// visual regression checks).
     pub screenshot_dir: Option<std::path::PathBuf>,
@@ -166,7 +169,8 @@ OPTIONS:
   --exit-on-finish                  Quit as soon as results are saved
   --name <nickname>                 Name shown on the scoreboard
   --out <dir>                       Results folder (default: ~/.local/share/little-falls/results)
-  --warmup <seconds>                Shader warm-up before timing starts (default: 5)
+  --warmup <seconds>                Minimum settle time before timing starts (default: 2)
+  --sweep-frames <n>                Frames used to pre-compile shaders (default: 240)
   --screenshots <dir>               Save PNG screenshots during the run
   -h, --help                        Show this help
 
@@ -191,7 +195,8 @@ impl Config {
             explore: false,
             nickname: String::new(),
             out_dir: None,
-            warmup: 5.0,
+            warmup: 2.0,
+            sweep_frames: 240,
             screenshot_dir: None,
             menu_screenshot: None,
             no_motion_blur: false,
@@ -235,6 +240,13 @@ impl Config {
                 "--exit-on-finish" => c.exit_on_finish = true,
                 "--name" => c.nickname = val("--name")?.chars().take(32).collect(),
                 "--out" => c.out_dir = Some(val("--out")?.into()),
+                "--sweep-frames" => {
+                    c.sweep_frames = val("--sweep-frames")?
+                        .parse::<u32>()
+                        .ok()
+                        .filter(|n| *n >= 10)
+                        .ok_or("--sweep-frames must be a number >= 10")?;
+                }
                 "--warmup" => {
                     c.warmup = val("--warmup")?
                         .parse::<f64>()

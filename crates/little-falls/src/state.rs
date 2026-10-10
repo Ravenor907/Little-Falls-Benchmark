@@ -12,6 +12,8 @@ pub enum AppState {
     /// One frame while startup finishes (fonts, GPU info, scene).
     #[default]
     Boot,
+    /// Loading screen while shaders compile.
+    Loading,
     Menu,
     CpuTest,
     Graphics,
@@ -55,6 +57,9 @@ pub struct RunData {
     pub cpu: Vec<Measurement>,
     pub frames: Option<FrameStats>,
     pub resolution: (u32, u32),
+    /// Problems that make the result less trustworthy, shown on the
+    /// results screen and saved in the results file.
+    pub warnings: Vec<String>,
 }
 
 /// System details, with the GPU filled in once the renderer is up.
@@ -86,10 +91,15 @@ pub fn detect_gpu(mut sys: ResMut<System>, adapter: Option<Res<bevy::render::ren
     }
 }
 
-/// Lets `--run` skip the menu (used by scripts and CI).
-pub fn auto_start(config: Res<Config>, mut commands: Commands, mut next: ResMut<NextState<AppState>>) {
+pub fn enter_loading(mut next: ResMut<NextState<AppState>>) {
+    next.set(AppState::Loading);
+}
+
+/// Where to go once loading finishes. `--run` skips the menu (used by
+/// scripts and CI).
+pub fn after_loading(config: &Config, commands: &mut Commands, next: &mut NextState<AppState>) {
     if let Some(plan) = config.auto_run {
-        start_run(plan, &mut commands, &mut next);
+        start_run(plan, commands, next);
     } else if config.explore {
         next.set(AppState::Explore);
     } else {

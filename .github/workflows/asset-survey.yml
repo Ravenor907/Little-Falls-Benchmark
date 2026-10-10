@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: pip install pillow
-      - run: mkdir -p survey-out && (python3 tools/asset_catalog.py survey-out 2>&1 | tee survey-out/log.txt) || true
+      - run: mkdir -p survey-out && (python3 tools/asset_catalog.py survey-out --shortlist 2>&1 | tee survey-out/log.txt) || true
       - name: Publish
         if: always()
         run: |
